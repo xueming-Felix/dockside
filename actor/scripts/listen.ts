@@ -6,16 +6,19 @@ import { actors } from "../generated/index.js"
 
 const actorId = process.argv[2] ?? ACTOR_ID
 const seconds = Number(process.argv[3] ?? 0)
-const conn = await actors.Dock.get(actorId).connect({ role: "dispatcher" })
+// The generated stub has no backend socket; take a grant like a browser would and open a plain WebSocket.
+const { websocketUrl } = await actors.Dock.prepareWebsocket({ actorId, metadata: { role: "dispatcher" } })
+const conn = new WebSocket(websocketUrl)
 let lastSeq = 0
 let first = true
 conn.addEventListener("open", () => console.log(`connected to ${actorId}`))
-conn.addEventListener("message", (e: { data: unknown }) => {
-  const s = e.data as Snapshot
+conn.addEventListener("message", (e: MessageEvent) => {
+  let s: Snapshot | undefined
+  try { s = JSON.parse(String(e.data)) } catch { return }
   if (!s || typeof s.simMin !== "number") return
   if (first) { console.log(`snapshot: ${hhmm(s.simMin)} seq≤${s.events.at(-1)?.seq ?? 0}; ${s.timers.length} timers armed, next ${s.timers[0] ? hhmm(s.timers[0].atMin) + " " + s.timers[0].kind : "none"}`); lastSeq = s.events.at(-1)?.seq ?? 0; first = false; return }
   for (const ev of s.events.filter(x => x.seq > lastSeq)) console.log(`${hhmm(ev.atMin)} ${ev.kind.padEnd(14)} ${ev.detail}`)
   lastSeq = Math.max(lastSeq, s.events.at(-1)?.seq ?? lastSeq)
 })
-conn.addEventListener("close", (e: { code: number; reason: string }) => { console.log(`closed ${e.code} ${e.reason}`); process.exit(0) })
+conn.addEventListener("close", (e: CloseEvent) => { console.log(`closed ${e.code} ${e.reason}`); process.exit(0) })
 if (seconds > 0) setTimeout(() => { conn.close(); process.exit(0) }, seconds * 1000)

@@ -16,4 +16,21 @@
 
 ## Connecting
 
+**Calls:** `actors.Dock.get(ACTOR_ID).request(...)` and so on, from the generated client.
+
+**Event stream (the dispatcher's websocket):** the generated stub has no backend `connect()`. Take a grant the way a browser would and open a plain WebSocket (Bun and Node 22 both have a global `WebSocket`):
+
+```ts
+const { websocketUrl } = await actors.Dock.prepareWebsocket({ actorId: ACTOR_ID, metadata: { role: "dispatcher" } })
+const ws = new WebSocket(websocketUrl)
+ws.addEventListener("message", e => {
+  const snap: Snapshot = JSON.parse(String(e.data))      // a full Snapshot on connect, after every call, after every alarm
+  for (const ev of snap.events.filter(x => x.seq > lastSeq)) handle(ev)   // noshow, auction_open, auction_closed, thread_expired, detention…
+  lastSeq = snap.events.at(-1)?.seq ?? lastSeq
+})
+```
+
+`actor/scripts/listen.ts` is exactly this as a CLI tail; `actor/scripts/peek.ts` prints the current state once. Reconnect on close with a fresh grant; grants expire if unused.
+
+
 Local: `terse actor dev` in `actor/` serves http://127.0.0.1:7100; run `terse actor generate` in your project and `actors.Dock.get(ACTOR_ID)` just works. Deployed: set `TERSE_ACTOR_URL` and `TERSE_API_KEY` in your `.env` (ask Person A for both), then regenerate.
