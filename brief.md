@@ -63,6 +63,10 @@ The owner settled the demo shape: view 1 is the v1 live board (ten triggers, doc
 
 Person B's live Relay path (`BUS=relay BRAIN=llm`) is untested and not part of the demo; it needs the Agent Relay workspace key, the OpenAI key and a Devpost team. Person B should read the `[added]` marks in `shared/types.ts` and use `setDoor(5, false)` for the door-down beat. Credentials stay in ignored `.env` files, never in Git. The owner should rotate the Terse API token after the hackathon because it was pasted in chat.
 
+## Stage script (Felix-Claude, 15:20 PDT)
+
+On the owner's request for scripts sized to more than a minute of live demo, under a minute of walkthrough and a two-minute total, `demo/stage-script.md` holds the spoken script with on-screen cues: live board first (R then 3 before the first word, key 4 during, the 09:10 auction alarm as the closer, an optional carrier-tab flip), then the Scenario 1 walkthrough one sentence per screen, then the close; a Scenario 2 variant and the timing facts from the driver are in the file. Open item for the owner: live key 1 and walkthrough scenario 1 have the two carriers swapped (see decisions.md). The same text is the narration for the Devpost video.
+
 ## Demo video (Felix-Claude, this topic)
 
 On 2026-10-31 at 13:14 the owner asked for research on heygen-com/hyperframes and for the demo video to be shot and cut, with the owner reading the script. [Request](journal/2026-10/cap_8c377343-86de-4c39-a5f6-cd1a1742d7d5.md). Findings: HyperFrames (Apache-2.0, v0.8.224 released that day, pre-1.0) renders a plain HTML composition to MP4 with headless Chrome and FFmpeg, ships Claude Code skills, Whisper captions and a local TTS, and does not record screens; it passed a smoke test on the Mac mini (ffmpeg and whisper-cpp installed via Homebrew, render about 2x realtime; Kokoro TTS is broken there, macOS `say` stands in).
