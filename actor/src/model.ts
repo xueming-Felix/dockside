@@ -164,7 +164,11 @@ export function replan(d: DockState, now: number, why: string, opts: ReplanOptio
     return undefined
   }
   /** A slot still works if it has not ended, the truck can be there within the arrival grace, hours allow it, and nobody fixed sits on it. */
+  // Without an arrival check armed, a booked slot that has already started is treated as having happened:
+  // it stays where it is and keeps occupying its hour (Person B's runner never calls arrive()/done()).
+  const unchecked = (t: Truck) => d.clock.arrivalChecks === "flagged" && !(d.clock.flagged ?? []).includes(t.id)
   const keeps = (t: Truck, cur: Appt, dur: number) =>
+    (unchecked(t) && cur.startMin <= now && !placed.some(a => a.truckId !== t.id && overlaps(a, cur.door, cur.startMin, dur))) ||
     cur.startMin + dur > now && t.etaMin <= cur.startMin + ARRIVAL_GRACE_MIN
     && (t.hosLimitMin === undefined || cur.startMin + dur <= t.hosLimitMin)
     && freeAt(t, doorOf(d, cur.door) ?? { id: cur.door, type: "dry", open: false }, cur.startMin, dur)

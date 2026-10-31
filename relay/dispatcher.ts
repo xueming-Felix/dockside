@@ -188,7 +188,7 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
     auctionedSlots.add(key);
     // The Dock actor opens an auction itself when its arrival-check alarm turns a truck into a no-show;
     // reuse that one instead of opening a second auction on the same slot.
-    const existing = lastSnap?.auctions.find((a) => a.door === door && a.startMin === startMin && a.status !== "awarded");
+    const existing = lastSnap?.auctions.find((a) => a.door === door && a.startMin === startMin && a.status === "open");
     if (existing) {
       postLater(fmt.auction({ auctionId: existing.id, door, startMin, why, closesMin: existing.closesMin }));
       return;
@@ -335,6 +335,11 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
   // ---- snapshot events ----------------------------------------------------------
 
   async function onEvents(snap: Snapshot) {
+    // The actor's onConnect frame may be the pre-seed state, and frames can arrive out of order:
+    // never let an older snapshot roll coverage back (that would "free" every booked slot).
+    if ((snap as { seeded?: boolean }).seeded === false) return;
+    const lastEvt = snap.events.at(-1)?.seq ?? 0;
+    if (lastEvt < lastSeq && !snap.events.some((e) => e.kind === "seed" && e.seq === 1)) return;
     const fresh = snap.events.filter((e) => e.seq > lastSeq);
     lastSeq = Math.max(lastSeq, ...snap.events.map((e) => e.seq), 0);
     trackAppts(snap);

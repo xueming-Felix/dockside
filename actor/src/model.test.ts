@@ -283,4 +283,18 @@ describe("Person B's seed conventions", () => {
     expect(s.timers.some(t => t.kind === "arrival_check" && t.truckId === "T13")).toBe(false)
     expect(M.opBackhaul(s, 222, "T9").result.ok).toBe(true)
   })
+
+  test("without arrival checks, a slot that already started stays put through later replans", () => {
+    const spec = { ...PIER9, appts: PIER9.appts!.map(a => ({ ...a, arrivalCheck: a.truckId === "T12" })) }
+    let s = M.opSeed(M.emptyState(), T0, spec).state
+    const r = M.opReportEta(at(150, s), 150, "T1", 240) // 10:30: T1's 09:00 slot is history; T10's 09:00 too
+    s = r.state
+    expect(slot(s, "T1")).toBe("2@09:00:booked")
+    expect(slot(s, "T10")).toBe("6@09:00:booked")
+    expect(r.result.offers).toHaveLength(0)
+    const r2 = M.opReportEta(s, 150, "T4", 210) // T4's 10:00 slot started at 10:00: history as well
+    expect(r2.result.offers).toHaveLength(0)
+    const r3 = M.opReportEta(s, 150, "T7", 240) // T7's 11:00 slot is still ahead: it moves
+    expect(r3.result.offers.map(o => o.truckId)).toEqual(["T7"])
+  })
 })
