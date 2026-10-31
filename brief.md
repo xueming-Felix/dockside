@@ -37,6 +37,10 @@ On 2026-10-31 at 11:40 the owner asked Felix-Claude to start Person A's implemen
 
 See the 2026-10-31 "Person A implementation" entry in [decisions.md](decisions.md) for the contract additions, the door-5 reconciliation and the runtime constraints.
 
+## Integration (15:15 onward)
+
+The owner asked Felix-Claude to take over Person B's branch (`person-b/relay`, pushed 15:10, "might not be fully finished") and "wire everything together", then posted the OpenAI key and the Agent Relay workspace key (now in `relay/.env`, git-ignored). The branch was merged into main keeping Person A's contract; `relay/` holds B's dispatcher, eight persona agents (rules brain plus a gpt-5-mini brain), a Relay bus with a local fallback, a scenario runner and 41 tests. Wiring done: B's runner now seeds the shared Pier 9 day (door 5, T13/T14, T8 eta for key 8), converts its speed unit for the actor, and its dispatcher reuses an auction the actor opened on a no-show and ignores stale snapshots; the actor arms arrival checks only for flagged trucks when B's seed is used, keeps past unchecked slots in place, accepts `backhaul(truckId)` and `setSpeed(0)`, and writes `+N` in overrun events. First run through the deployed actor (300x, local bus, rules brain) exercised the whole loop mechanically; a demo-speed rerun was in progress at 15:45. The real Relay bus and the LLM brain were not run live before the 15:55 submission. `demo/devpost.md` was updated to what was built and handed to the owner; the stage recommendation stayed the verified button demo.
+
 ## Open items
 
-Person B's side (`relay/`) has not started in this repository; it needs the Agent Relay workspace key, the OpenAI key and a Devpost team. Person B should read the `[added]` marks in `shared/types.ts` and use `setDoor(5, false)` for the door-down beat. Credentials stay in ignored `.env` files, never in Git. The owner should rotate the Terse API token after the hackathon because it was pasted in chat.
+Person B's live Relay path (`BUS=relay BRAIN=llm`) is untested; it needs the Agent Relay workspace key, the OpenAI key and a Devpost team. Person B should read the `[added]` marks in `shared/types.ts` and use `setDoor(5, false)` for the door-down beat. Credentials stay in ignored `.env` files, never in Git. The owner should rotate the Terse API token after the hackathon because it was pasted in chat.
