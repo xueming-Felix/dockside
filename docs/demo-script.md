@@ -1,25 +1,25 @@
 # Dockside · the 5-minute demo script
 
-Two ways to drive it. **Auto**: `actor/scripts/scenario.ts` presses every key and plays the agents' lines at real demo speed (60x: one real second per sim minute, 08:00 to 12:00 in four minutes); the narrator only talks. **Manual**: Person B's runner presses keys 1 to 10 and the Relay agents talk; the narration is the same, just wait for each beat. Times below are the **board clock** (top of the dashboard), so the narrator reads the board, not a stopwatch.
+Three ways to drive it, same narration. **Buttons** (the stage default): the control strip at the bottom of the dashboard has one button per key (1 Collision 08:05 … 10 Freeze 12:00) plus Reset and Auto; the presenter clicks, the room sees the click and the board react. Each button runs that key's actor calls and the agents' lines; a driver inside the grant server does the dispatcher's alarm work (awards on auction close, accepts on thread expiry, bids on the no-show auction, lets trucks in and out on time). Keys 1–9, 0, R and A work as keyboard shortcuts on the dashboard. **Auto**: press Auto (or run `STAGE=1 bun scripts/scenario.ts <actor> 60` from a terminal) and the keys fire at their scheduled times. **Manual**: Person B's runner presses keys and the Relay agents talk. Times below are the **board clock** (top of the dashboard), so the narrator reads the board, not a stopwatch.
+
+Press each button at or after its scheduled time, before the next one's. Three have a deadline: key 3 before 09:30 (T1 would no-show), key 4 before 10:00 (T5 would be at the door), key 7 before 11:00 (T7 would be at the door). If a button shows a red note, read it, press Reset if the beat matters, and carry on.
 
 ## Setup, five minutes before
 
 ```sh
 # projector: the dashboard against the deployed actor (already running on the Mac mini: http://100.117.209.6:7110)
 cd dashboard && bun run build && bun run start:cloud        # if it is not running; then open http://127.0.0.1:7110 full screen
-
-# driver's terminal (auto mode), do not press Enter yet
-cd actor && set -a && source .env.cloud && set +a
-STAGE=1 bun scripts/scenario.ts pier9-2026-10-31 60
 ```
 
-`STAGE=1` leaves the clock frozen at 12:00 for the close. The script seeds the dock at 08:00 itself, so the board resets the moment it starts. If anything goes wrong mid-run: `bun scripts/seed.ts` resets to 08:00 and you start the script again.
+Click **Reset** on the strip: the board snaps to 08:00 at 60x and every button goes back to ready. The clock is now running, so start the opener within a few seconds and click **1** on "six doors". If anything goes wrong mid-run, Reset again and restart the narration from the top; the whole day is four minutes.
+
+Terminal fallback if the strip is unreachable: `cd actor && set -a && source .env.cloud && set +a && STAGE=1 bun scripts/scenario.ts pier9-2026-10-31 60` plays the same beats on the scripted timing and leaves the clock frozen at 12:00.
 
 ## Open · 20 s · before pressing Enter
 
 > "A truck needs a time at a warehouse door. Today that's a phone call, and when something goes wrong it's six phone calls. This is Pier 9 Cold Storage: six doors, twelve trucks, and eight companies whose agents are all on Agent Relay. We won't touch the keyboard except to break things."
 
-Press Enter on "six doors". The board snaps to 08:00.
+Click **1** on "six doors" (Reset was clicked a moment before, so the board already shows 08:00).
 
 ## Act 1 · the collision · 08:05 to 08:30
 
@@ -68,7 +68,7 @@ Point at the counters: side payments $430, detention avoided $900, moves 13, bac
 
 ## If it breaks
 
-- Script dies mid-run: `bun scripts/seed.ts`, restart the script, keep talking; the board resets to 08:00 in a second.
+- A button fails or the strip goes grey ("driver offline"): the grant server died; `bun run start:cloud` in dashboard/ brings it back in two seconds, then Reset. Terminal fallback: the STAGE script above.
 - An alarm seems late: the script waits ten real seconds, then calls `tick()` itself and says so in its own terminal. On stage, say nothing; it catches up.
 - Dashboard shows "waiting for seed()" or disconnects: it reconnects on its own; reload the page only if it stays dark for ten seconds.
-- Running long: the script cannot skip keys, so start the close at 11:30 while it finishes behind you; keys 8 and 9 are the ones PLAN cuts.
+- Running long: skip buttons 8 and 9 (PLAN's own cuts) and click 10 at 12:00; in Auto mode start the close at 11:30 while it finishes behind you.
