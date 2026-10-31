@@ -18,6 +18,30 @@ A warehouse's dock is a [Durable Actor](https://github.com/TerseAI/durable-actor
 | `relay/` | Person B | dispatcher, persona agents on the Relay SDK, scenario runner, `MockDock` / `TerseDock` |
 | `docs/` | both | this plan, diagrams, pitch |
 
+## Run it
+
+Prerequisites: Bun 1.4+, the Terse CLI (`bunx terse-cli install --yes`), and for the deployment a `TERSE_API_KEY` from app.useterse.ai.
+
+```sh
+# 1. the actor, locally (port 7100; no login needed)
+cd actor && bun install && bun test && terse actor dev
+
+# 2. a typed client, in any folder that calls the actor (actor/, relay/, dashboard/ uses actor/generated)
+terse actor generate
+
+# 3. the dashboard: grant server on 7110 + Vite on 5173
+cd dashboard && bun install && bun run server      # terminal A
+cd dashboard && bun run dev                        # terminal B, open http://127.0.0.1:5173
+
+# 4. drive it without Relay: seeds Pier 9, collides two requests, swaps, closes door 5, counters
+cd actor && bun scripts/drive.ts                   # bun scripts/peek.ts prints the current state
+
+# 5. deploy (syncs the vendored contract first)
+cd actor && bun run deploy
+```
+
+The deployed actor lives at `https://api.useterse.ai/<projectId>/actors` (project `dockside`); put that as `TERSE_ACTOR_URL` with the key in the `.env` of whatever calls it. The actor id is `pier9-2026-10-31`. `shared/README.md` explains the contract and what differs from PLAN.md.
+
 ## Workspace records
 
 This repository is also the project record for `dockside` in Xueming's personal agent workspace.
