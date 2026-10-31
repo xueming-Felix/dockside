@@ -48,9 +48,8 @@ code { font-family: var(--mono); }
 /* gantt */
 .gantt { display: grid; grid-template-rows: 22px repeat(6, minmax(0, 1fr)); gap: 6px; flex: 1; min-height: 0; }
 .row { display: grid; grid-template-columns: 112px 1fr; gap: 8px; min-height: 0; }
-.row.head .track { border: 0; background: none; }
+.row.head .track { border: 0; background: none; overflow: visible; }
 .row.head .hour { position: absolute; top: 2px; transform: translateX(-50%); font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
-.row.head .hour:first-child { transform: none; }
 .door { display: flex; flex-direction: column; justify-content: center; padding-left: 4px; }
 .door b { font-size: 14px; } .door span { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .row.closed .door b { color: var(--detention); } .row.closed .track { background: repeating-linear-gradient(135deg, var(--panel-2) 0 10px, #1a1519 10px 20px); }
@@ -59,19 +58,38 @@ code { font-family: var(--mono); }
 .now { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--hot); box-shadow: 0 0 8px var(--hot); z-index: 3; transition: left 0.25s linear; }
 .blk { position: absolute; top: 5px; bottom: 5px; border-radius: 5px; padding: 4px 8px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; color: #fff;
   background: var(--booked); border: 1.5px solid transparent; transition: left 0.6s cubic-bezier(.2,.8,.2,1), width 0.6s cubic-bezier(.2,.8,.2,1), background-color 0.3s; z-index: 2; }
-.blk b { font-family: var(--mono); font-size: 14px; font-weight: 600; line-height: 1.1; }
-.blk span { font-size: 11px; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.blk b { font-family: var(--mono); font-size: 14px; font-weight: 600; line-height: 1.1; white-space: nowrap; }
+.blk b i { font-style: normal; font-family: var(--font); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; background: var(--hot); color: #1b1400; border-radius: 3px; padding: 1px 4px; margin-left: 6px; vertical-align: 2px; }
+.blk span, .blk em { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.blk span { font-size: 11px; opacity: 0.85; }
+.blk em { font-style: normal; font-size: 10.5px; opacity: 0.8; }
 .blk.arrived { background: var(--arrived); } .blk.done { background: var(--done); } .blk.late { background: var(--late); color: #1b1400; }
 .blk.detention { background: var(--detention); animation: pulse 1.4s ease-in-out infinite; }
 .blk.noshow { background: repeating-linear-gradient(135deg, var(--noshow) 0 6px, #343e4a 6px 12px); color: #d5dde6; opacity: 0.8; }
 .blk.pending { border-color: #fff; border-style: dashed; }
 .blk.hot { box-shadow: inset 0 0 0 2px var(--hot); }
-.auction { position: absolute; top: 5px; bottom: 5px; border: 1.5px dashed var(--deal); border-radius: 5px; padding: 4px 8px; color: var(--deal); display: flex; flex-direction: column; justify-content: center; z-index: 1; }
+/* A block that shares its slot with an auction shrinks to a strip; the auction box takes the rest of the row. */
+.blk.stacked { bottom: auto; height: 26px; padding: 0 8px; flex-direction: row; align-items: center; gap: 8px; }
+.blk.stacked span { display: none; }
+.auction { position: absolute; top: 5px; bottom: 5px; border: 1.5px dashed var(--deal); border-radius: 5px; padding: 4px 7px; color: var(--deal); display: flex; flex-direction: column; justify-content: center; gap: 1px; overflow: hidden; z-index: 1; }
+.auction.stacked { top: 35px; }
+.auction b, .auction span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .auction b { font-family: var(--mono); font-size: 12px; } .auction span { font-size: 11px; opacity: 0.9; }
 .auction.open { animation: pulse 1.6s ease-in-out infinite; }
+.auction.closed { opacity: 0.7; }
 .strip { display: flex; flex-wrap: wrap; gap: 14px; padding: 8px 4px 0; font-size: 12.5px; color: var(--muted); }
 .strip .claim.waived { color: var(--settle); } .strip .claim.filed { color: var(--late); } .strip .claim.approved { color: var(--accent); }
 @keyframes pulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.25); } }
+/* Below ~1600px an hour column is about 70px wide: tighten the block and auction text so nothing is cut mid-word. */
+@media (max-width: 1600px) {
+  .blk { padding: 4px 6px; }
+  .blk.stacked { padding: 0 6px; }
+  .blk.stacked em { display: none; }
+  .blk em { font-size: 9.5px; }
+  .auction { padding: 3px 5px; }
+  .auction b { font-size: 10.5px; }
+  .auction span { font-size: 9.5px; }
+}
 
 /* chatter */
 .feed { flex: 1; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }

@@ -8,16 +8,20 @@ import { useDock, useSimMin } from "./dock"
 const pct = (m: number) => `${(Math.max(0, Math.min(DAY_END_MIN, m)) / DAY_END_MIN) * 100}%`
 const HOURS = Array.from({ length: 10 }, (_, i) => i * 60)
 const ALARM_KINDS = new Set(["noshow", "detention", "auction_closed", "thread_expired", "auction_open", "claim"])
+// The word printed inside a block for the states a colour alone doesn't explain on a projector.
+const STATUS_WORD: Record<string, string> = { noshow: "no-show", detention: "detention", late: "late", done: "done" }
 
 export function App() {
   const actorId = new URLSearchParams(location.search).get("actor") || ACTOR_ID
   const feed = useDock(actorId)
   const [cursor, setCursor] = useState<number | null>(null) // null = live
-  const snap = cursor === null ? feed.live : feed.history[Math.min(cursor, feed.history.length - 1)]
+  // Replay scrubs through seeded snapshots only: the pre-seed snapshot would blank the board and hide the slider.
+  const history = useMemo(() => feed.history.filter(s => s.seeded), [feed.history])
+  const snap = cursor === null ? feed.live : history[Math.min(cursor, history.length - 1)]
   const sim = useSimMin(cursor === null ? feed.live : undefined)
   const shownSim = cursor === null ? sim : snap?.simMin ?? 0
 
-  if (!snap) return <Empty status={feed.status} error={feed.error} actorId={actorId} />
+  if (!snap || !snap.seeded) return <Empty status={feed.status} error={feed.error} actorId={actorId} />
   return (
     <div className="app">
       <header className="top">
@@ -34,7 +38,7 @@ export function App() {
         <section className="panel feed-panel"><h2>#pier9 <small>{snap.chatter.length} lines</small></h2><Feed chatter={snap.chatter} /></section>
         <section className="panel events-panel"><h2>Dock log <small>alarms highlighted</small></h2><Events events={snap.events} /></section>
       </main>
-      <Replay feed={feed} cursor={cursor} setCursor={setCursor} />
+      <Replay history={history} cursor={cursor} setCursor={setCursor} />
     </div>
   )
 }
@@ -94,17 +98,22 @@ function Gantt({ snap, sim }: { snap: Snapshot; sim: number }) {
       {snap.doors.map(d => {
         const appts = snap.appts.filter(a => a.door === d.id && a.status !== "tomorrow")
         const auctions = snap.auctions.filter(a => a.door === d.id && a.status !== "awarded")
+        // A no-show keeps its block and spawns an auction for the same slot: stack them (block as a strip on top) instead of overprinting.
+        const shared = (startMin: number) => appts.some(a => a.startMin === startMin) && auctions.some(a => a.startMin === startMin)
         return (
           <div key={d.id} className={`row ${d.open ? "" : "closed"}`}>
             <div className="door"><b>Door {d.id}</b><span>{d.type}{d.open ? "" : " · out of service"}</span></div>
             <div className="track">
               {HOURS.map(h => <i key={h} className="gridline" style={{ left: pct(h) }} />)}
               {auctions.map(a => (
-                <div key={a.id} className={`auction ${a.status}`} style={{ left: pct(a.startMin), width: pct(60) }}>
-                  <b>{a.status === "open" ? "AUCTION" : "CLOSED"} {a.id}</b><span>{a.bids.length} bid{a.bids.length === 1 ? "" : "s"} · {a.status === "open" ? `closes ${hhmm(a.closesMin)}` : "awaiting award"}</span>
+                <div key={a.id} className={`auction ${a.status} ${shared(a.startMin) ? "stacked" : ""}`} style={{ left: pct(a.startMin), width: pct(60) }}
+                  title={`${a.id} · door ${a.door} ${hhmm(a.startMin)} · ${a.status} · ${a.bids.length} bids${a.reason ? ` · ${a.reason}` : ""}`}>
+                  <b>{a.status === "open" ? "AUCTION" : "CLOSED"}</b>
+                  <span>{a.id} · {a.bids.length} bid{a.bids.length === 1 ? "" : "s"}</span>
+                  <span>{a.status === "open" ? `closes ${hhmm(a.closesMin)}` : "awaits award"}</span>
                 </div>
               ))}
-              {appts.map(a => <Block key={a.truckId} a={a} t={trucks.get(a.truckId)} cls={blockClass(a, sim)} pending={pending.has(a.truckId)} />)}
+              {appts.map(a => <Block key={a.truckId} a={a} t={trucks.get(a.truckId)} cls={blockClass(a, sim)} pending={pending.has(a.truckId)} stacked={shared(a.startMin)} />)}
               <i className="now" style={{ left: pct(sim) }} />
             </div>
           </div>
@@ -114,11 +123,14 @@ function Gantt({ snap, sim }: { snap: Snapshot; sim: number }) {
   )
 }
 
-function Block({ a, t, cls, pending }: { a: Appt; t?: Truck; cls: string; pending: boolean }) {
-  const title = `${a.truckId} · ${t?.carrier ?? "?"} · ${t?.load ?? ""} · ${hhmm(a.startMin)}–${hhmm(a.startMin + a.durationMin)} · ${a.status}${pending ? " · offer pending" : ""}`
+function Block({ a, t, cls, pending, stacked }: { a: Appt; t?: Truck; cls: string; pending: boolean; stacked: boolean }) {
+  const hot = t?.priority === 2
+  const title = `${a.truckId} · ${t?.carrier ?? "?"} · ${t?.load ?? ""} · ${hhmm(a.startMin)}–${hhmm(a.startMin + a.durationMin)} · ${a.status}${hot ? " · hot" : ""}${pending ? " · offer pending" : ""}`
   return (
-    <div className={`blk ${cls} ${pending ? "pending" : ""} ${t?.priority === 2 ? "hot" : ""}`} style={{ left: pct(a.startMin), width: pct(a.durationMin) }} title={title}>
-      <b>{a.truckId}</b><span>{t?.carrier}{t?.priority === 2 ? " · HOT" : ""}{a.durationMin > 60 ? ` · +${a.durationMin - 60}m` : ""}</span>
+    <div className={`blk ${cls} ${pending ? "pending" : ""} ${hot ? "hot" : ""} ${stacked ? "stacked" : ""}`} style={{ left: pct(a.startMin), width: pct(a.durationMin) }} title={title}>
+      <b>{a.truckId}{hot && <i>HOT</i>}</b>
+      <span>{t?.carrier}{a.durationMin > 60 ? ` · +${a.durationMin - 60}m` : ""}</span>
+      {STATUS_WORD[cls] && <em>{STATUS_WORD[cls]}</em>}
     </div>
   )
 }
@@ -180,11 +192,11 @@ function Events({ events }: { events: Event[] }) {
   )
 }
 
-function Replay({ feed, cursor, setCursor }: { feed: ReturnType<typeof useDock>; cursor: number | null; setCursor: (c: number | null) => void }) {
-  const n = feed.history.length
+function Replay({ history, cursor, setCursor }: { history: Snapshot[]; cursor: number | null; setCursor: (c: number | null) => void }) {
+  const n = history.length
   if (n < 2) return null
   const idx = cursor === null ? n - 1 : Math.min(cursor, n - 1)
-  const at = feed.history[idx]
+  const at = history[idx]
   return (
     <footer className={`replay ${cursor === null ? "live" : "paused"}`}>
       <button onClick={() => setCursor(null)} disabled={cursor === null}>{cursor === null ? "LIVE" : "back to live"}</button>

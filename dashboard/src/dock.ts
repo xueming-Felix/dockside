@@ -17,6 +17,9 @@ export function useDock(actorId: string): DockFeed {
         const res = await fetch(`/api/socket?actor=${encodeURIComponent(actorId)}`, { method: "POST" })
         if (!res.ok) throw new Error(await res.text())
         const { websocketUrl } = (await res.json()) as { websocketUrl: string }
+        // The effect may have been cleaned up while the grant was in flight (StrictMode runs effects twice in dev);
+        // opening a socket now would leak it and double every snapshot in history.
+        if (stopped) return
         ws = new WebSocket(websocketUrl)
         ws.onopen = () => { retry = 0; setFeed(f => ({ ...f, status: "open", error: undefined })) }
         ws.onmessage = (e) => {
@@ -26,8 +29,9 @@ export function useDock(actorId: string): DockFeed {
           const s = snap
           setFeed(f => ({ ...f, live: s, history: [...f.history.slice(-900), s] }))
         }
-        ws.onclose = () => { setFeed(f => ({ ...f, status: "closed" })); later(connect) }
+        ws.onclose = () => { if (stopped) return; setFeed(f => ({ ...f, status: "closed" })); later(connect) }
       } catch (error) {
+        if (stopped) return
         setFeed(f => ({ ...f, status: "error", error: error instanceof Error ? error.message : String(error) }))
         later(connect)
       }
