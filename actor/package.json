@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "terse actor dev",
     "generate": "terse actor generate",
+    "sync": "cp ../shared/types.ts src/shared/types.ts",
     "test": "bun test",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.local.json",
+    "deploy": "bun run sync && terse deploy",
     "drive": "bun scripts/drive.ts"
   },
   "dependencies": {

@@ -9,9 +9,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "noEmit": true,
-    "types": ["bun-types"]
+    "noEmit": true
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", "../shared/**/*.ts"],
-  "exclude": ["node_modules", "dist", "generated"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "generated", "src/**/*.test.ts"]
 }

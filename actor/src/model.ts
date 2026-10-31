@@ -7,8 +7,8 @@ import {
   type EventKind, type Offer, type Scenario, type Snapshot, type Thread, type Timer, type TimerKind, type Truck,
   ARRIVAL_GRACE_MIN, AUCTION_LENGTH_MIN, DAY_END_MIN, DEFAULT_SPEED, DETENTION_FREE_MIN, DETENTION_USD_PER_HOUR,
   SLOT_MIN, hhmm,
-} from "../../shared/types.js"
-import type { AuctionResult, ClaimResult, CounterResult, OffersResult, OkResult, RequestResult, SayResult, ThreadResult } from "../../shared/types.js"
+} from "./shared/types.js"
+import type { AuctionResult, ClaimResult, CounterResult, OffersResult, OkResult, RequestResult, SayResult, ThreadResult } from "./shared/types.js"
 
 export type Clock = { realStart: number; speed: number; frozenAtMin: number | null; seeded: boolean }
 export type Seq = { event: number; chat: number; offer: number; auction: number; timer: number }

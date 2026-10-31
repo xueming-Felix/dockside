@@ -6,7 +6,7 @@ import { Actor, Persisted, type ActorSocket } from "terse-sdk/actor"
 import type {
   Appt, Auction, AuctionResult, Chat, Claim, ClaimResult, CounterResult, Counters, DockApi, Door, Event,
   Offer, OffersResult, OkResult, RequestResult, SayResult, Scenario, Snapshot, Thread, ThreadResult, Timer, Truck,
-} from "../../shared/types.js"
+} from "./shared/types.js"
 import * as M from "./model.js"
 
 type Meta = { role: string } | null

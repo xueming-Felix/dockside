@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { PIER9 } from "../../shared/pier9.js"
 import { hhmm } from "../../shared/types.js"
 import * as M from "./model.js"
+import { readFileSync } from "node:fs"
 
 const T0 = 1_700_000_000_000
 const seeded = () => M.opSeed(M.emptyState(), T0, PIER9).state
@@ -231,5 +232,13 @@ describe("act 3: the hot load and the alarms", () => {
     s = M.opResume(s, T0 + 999_000).state
     expect(M.simNow(s.clock, T0 + 999_000)).toBe(240)
     expect(M.simNow(s.clock, T0 + 1_059_000)).toBe(300)
+  })
+})
+
+describe("vendored contract", () => {
+  test("actor/src/shared/types.ts is a byte-for-byte copy of shared/types.ts (run `bun run sync` after editing the contract)", () => {
+    const vendored = readFileSync(new URL("./shared/types.ts", import.meta.url), "utf8")
+    const source = readFileSync(new URL("../../shared/types.ts", import.meta.url), "utf8")
+    expect(vendored).toBe(source)
   })
 })
