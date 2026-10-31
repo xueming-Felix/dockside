@@ -155,11 +155,36 @@ describe("act 2: the cascade", () => {
   })
 
   test("a thread that goes quiet expires by timer", () => {
-    let s = M.opOpenThread(at(110), 110, "th1", "o1", 120).state
-    expect(M.opOpenThread(s, 110, "th1", "o1", 120).result.ok).toBe(false)
+    let s = M.opOpenThread(at(110), 110, "th1", "a1", 120).state // a1: the auction the 08:30 no-show opened
+    expect(M.opOpenThread(s, 110, "th1", "a1", 120).result.ok).toBe(false)
+    expect(s.events.at(-1)!.kind).toBe("thread_open")
     s = at(120, s)
     expect(s.threads[0].status).toBe("expired")
     expect(s.events.at(-1)!.kind).toBe("thread_expired")
+  })
+
+  test("arriving in the same minute as the arrival check reverts the no-show and withdraws the empty auction", () => {
+    const s = at(30) // T3's 08:30 check has fired: noshow + auction on door 1 08:00
+    expect(slot(s, "T3")).toBe("1@08:00:noshow")
+    const r = M.opArrive(s, 30, "T3")
+    expect(r.result.ok).toBe(true)
+    expect(slot(r.state, "T3")).toBe("1@08:00:unloading")
+    expect(r.state.auctions.find(a => a.door === 1 && a.startMin === 0)!.status).toBe("closed")
+    expect(r.state.timers.some(t => !t.fired && t.kind === "auction_close")).toBe(false)
+    expect(M.opArrive(at(33), 33, "T3").result.ok).toBe(false)
+    const bid = M.opBid(s, 30, s.auctions[0].id, "T13", 30)
+    const withBid = M.opRequest(s, 30, "carrier-a", "T13", 4, 360).state
+    expect(M.opArrive(M.opBid(withBid, 30, withBid.auctions[0].id, "T13", 30).state, 30, "T3").result.ok).toBe(false)
+    void bid
+  })
+
+  test("openThread rejects ids that are neither an offer nor an auction", () => {
+    expect(M.opOpenThread(seeded(), 5, "th1", "o99", 15).result.ok).toBe(false)
+    let s = M.opRequest(seeded(), 5, "carrier-a", "T13", 4, 360).state
+    s = M.opRequest(s, 5, "carrier-b", "T14", 4, 360).state
+    const r = M.opOpenThread(s, 5, "th1", "o1", 15)
+    expect(r.result.ok).toBe(true)
+    expect(r.state.events.at(-1)!.kind).toBe("thread_open")
   })
 
   test("declining an offer re-queues the truck and offers it the next slot", () => {

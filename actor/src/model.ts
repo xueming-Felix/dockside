@@ -277,11 +277,11 @@ export function drainTimers(d: DockState, now: number): number {
       a.status = "noshow"
       expireOffers(d, truck.id)
       event(d, at, "noshow", `${label(truck)} did not show for door ${a.door} ${hhmm(a.startMin)}; slot released`, { truckId: truck.id })
-      if (a.startMin + a.durationMin > now + 5) openAuction(d, at, a.door, a.startMin, now + AUCTION_LENGTH_MIN, `no-show ${truck.id}`)
+      if (a.startMin + a.durationMin > now + 5) openAuction(d, at, a.door, a.startMin, at + AUCTION_LENGTH_MIN, `no-show ${truck.id}`)
     } else if (t.kind === "detention" && t.truckId) {
       const a = apptOf(d, t.truckId); const truck = truckOf(d, t.truckId)
       if (!a || !truck || a.arrivedMin === undefined || !(a.status === "arrived" || a.status === "unloading")) continue
-      const waited = now - a.arrivedMin
+      const waited = at - a.arrivedMin
       event(d, at, "detention", `${label(truck)} has waited ${waited} min at door ${a.door}; detention clock running at $${DETENTION_USD_PER_HOUR}/h`, { truckId: truck.id })
       const c = claimFor(d, at, truck, waited)
       event(d, at, "claim", `claim ${c.status} for ${truck.id}: $${c.amount}`, { truckId: truck.id })
@@ -540,9 +540,11 @@ export function opAward(s: DockState, now: number, auctionId: string, truckId: s
 export function opOpenThread(s: DockState, now: number, threadId: string, offerId: string, deadlineMin: number): Op<ThreadResult> {
   const d = clone(s)
   if (d.threads.some(t => t.id === threadId)) return { state: d, result: { ok: false, reason: `${threadId} already exists` } }
+  if (!d.offers.some(o => o.id === offerId) && !d.auctions.some(a => a.id === offerId)) return { state: d, result: { ok: false, reason: `${offerId} is not an offer or auction` } }
   const th: Thread = { id: threadId, offerId, deadlineMin, status: "open" }
   d.threads.push(th)
   addTimer(d, "thread_deadline", deadlineMin, { threadId })
+  event(d, now, "thread_open", `${threadId} opened for ${offerId}; the clock decides at ${hhmm(deadlineMin)}`, { threadId, offerId })
   return { state: d, result: { ok: true, thread: th } }
 }
 
@@ -571,13 +573,27 @@ export function opArrive(s: DockState, now: number, truckId: string): Op<OkResul
   const d = clone(s)
   const a = apptOf(d, truckId); const t = truckOf(d, truckId)
   if (!a || !t) return { state: d, result: { ok: false, reason: `${truckId} has no appointment` } }
-  if (a.status !== "booked") return { state: d, result: { ok: false, reason: `${truckId} is ${a.status}` } }
+  // Arriving in the same minute the arrival check fired still counts: the no-show is reverted and the auto-opened
+  // auction withdrawn, unless the slot already drew a bid or went to someone else.
+  const buzzer = a.status === "noshow" && now <= a.startMin + ARRIVAL_GRACE_MIN + 1
+  if (a.status !== "booked" && !buzzer) return { state: d, result: { ok: false, reason: `${truckId} is ${a.status}` } }
+  if (buzzer) {
+    if (holderAt(d.appts, a.door, a.startMin, truckId)) return { state: d, result: { ok: false, reason: `door ${a.door} ${hhmm(a.startMin)} went to another truck` } }
+    const au = d.auctions.find(x => x.door === a.door && x.startMin === a.startMin && x.status === "open")
+    if (au && au.bids.length > 0) return { state: d, result: { ok: false, reason: `${truckId} was marked no-show and ${au.id} already has ${au.bids.length} bid(s)` } }
+    if (au) {
+      au.status = "closed"
+      au.reason = `${truckId} arrived inside the grace window`
+      dropTimers(d, x => x.kind === "auction_close" && x.auctionId === au.id)
+      event(d, now, "auction_closed", `${au.id} withdrawn: ${truckId} arrived after all`, { auctionId: au.id, truckId })
+    }
+  }
   a.status = now >= a.startMin ? "unloading" : "arrived"
   a.arrivedMin = now
   dropTimers(d, x => x.kind === "arrival_check" && x.truckId === truckId)
   addTimer(d, "detention", now + DETENTION_FREE_MIN, { truckId })
   expireOffers(d, truckId)
-  event(d, now, "arrived", `${label(t)} at door ${a.door} (${a.status}); detention clock starts ${hhmm(now + DETENTION_FREE_MIN)}`, { truckId })
+  event(d, now, "arrived", `${label(t)} at door ${a.door} (${a.status})${buzzer ? ", just inside the grace window" : ""}; detention clock starts ${hhmm(now + DETENTION_FREE_MIN)}`, { truckId })
   return { state: d, result: { ok: true } }
 }
 

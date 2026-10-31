@@ -14,6 +14,17 @@
 - **Stage controls:** `freeze()` for key 10, `resume()`, `setSpeed(n)`, `tick()` as the manual fallback if an alarm looks late, `backhaul(truckId, by)` for key 9.
 - **Clock:** `Snapshot.realStart` is the epoch ms of sim 08:00 and `speed` is sim minutes per real minute (60 = one real second per sim minute). `hhmm()` and `parseHHMM()` convert.
 
+## Runner notes (from the full-scenario run on the real runtime)
+
+- Gate every truck: `arrive()` booked trucks once their slot starts (except the scripted no-show) and `done()` them when it ends (except the detention beat), or the dock will no-show and detain them for real. Auction winners too.
+- `arrive()` in the same sim minute as the truck's arrival check still counts (the no-show is reverted and the auto-opened auction withdrawn if nobody bid yet); a minute later it is a no-show for good.
+- The two act-2 auctions close an hour apart: door 2 09:00 closes 09:10, door 1 10:00 closes 10:10. Award each on its `auction_closed` event.
+- A no-show's auction closes ten minutes after the check fired; find it from the `auction_open` event's `auctionId`.
+- `openThread()` validates the offer id and emits `thread_open`; `settleThread()` marks the offer accepted.
+- Vetting (key 5) never touches the actor: the "refused" line is chatter only; the `refused` event kind comes from a rejected `counter()`.
+- Key 8 with this seed: `request("carrier-d", "T15", 4, 480, { hosLimitMin: 500 })` yields the `tomorrow` event.
+- `actor/scripts/scenario.ts` plays all ten keys against any actor id (`bun scripts/scenario.ts [actorId] [speed]`) and is the reference for the exact call order.
+
 ## Connecting
 
 **Calls:** `actors.Dock.get(ACTOR_ID).request(...)` and so on, from the generated client.

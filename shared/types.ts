@@ -68,7 +68,7 @@ export type EventKind =
   | "swap" | "overrun" | "auction_open" | "auction_closed" | "thread_expired" | "refused"
   // [added] bookkeeping kinds so the feed can narrate every mutation
   | "seed" | "booked" | "accepted" | "countered" | "declined" | "awarded" | "bid" | "settled"
-  | "paid" | "claim" | "arrived" | "done" | "door" | "clock" | "eta" | "backhaul"
+  | "paid" | "claim" | "arrived" | "done" | "door" | "clock" | "eta" | "backhaul" | "thread_open"
 
 export type Event = {
   seq: number
