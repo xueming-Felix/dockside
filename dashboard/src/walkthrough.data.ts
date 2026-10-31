@@ -21,7 +21,28 @@ export type WalkStep = {
   inboxes: [string, string]
   callout?: string
 }
-export type Walkthrough = { id: string; n: number; title: string; subtitle: string; steps: WalkStep[]; outcome: string }
+export type Background = { stakes: string; cast: { handle: string; wants: string }[]; story: string[] }
+export type Walkthrough = { id: string; n: number; title: string; subtitle: string; background: Background; steps: WalkStep[]; outcome: string }
+
+// The opening screen: the setting, before any scenario.
+export const SETTING = {
+  title: "Pier 9 Cold Storage, one Saturday",
+  lede: "A warehouse with six dock doors: four dry, two refrigerated. Twelve trucks are booked between 08:00 and 13:00. Detention costs $75 an hour after two free hours, and the warehouse is the one who pays it.",
+  paragraphs: [
+    "The dock itself is a Durable Actor on Terse: one object that holds every door, truck, appointment, offer and timer for the day, handles one request at a time, and wakes itself up when a clock runs out.",
+    "Every company that wants a door is an agent on Agent Relay: four carriers, a broker, a shipper, the warehouse, and one stranger. They talk to each other in #pier9. The dock never talks to them; a dispatcher mirrors what they say and acts only on settlements, bids and answers to offers.",
+    "Today two things go wrong. We follow each one step by step: what the dock does, what the agents say to each other, and why nobody picks up a phone.",
+  ],
+  cast: [
+    { handle: "carrier-a", role: "the pusher", hour: "$120", line: "Always wants the earliest slot and will pay for it." },
+    { handle: "carrier-b", role: "cooperative", hour: "$60", line: "Will move later for cash; counters once, then agrees." },
+    { handle: "carrier-c", role: "reefer", hour: "$200", line: "Cold chain; refuses dry doors; pays for the earliest reefer slot." },
+    { handle: "carrier-d", role: "owner-operator", hour: "$90", line: "Cash-poor; hours end at 15:30." },
+    { handle: "broker", role: "trades, never pays", hour: "$100", line: "Vets strangers against its tender list." },
+    { handle: "shipper", role: "has the hot load", hour: "$300", line: "Will pay to be unloaded by 11:00." },
+    { handle: "pier9-ops", role: "the warehouse", hour: "—", line: "Approves waivers under $200; announces doors and auctions." },
+  ],
+}
 
 const d4 = (slots: MiniSlot[]): MiniDoor => ({ id: 4, type: "dry", open: true, slots })
 const d5 = (open: boolean, slots: MiniSlot[]): MiniDoor => ({ id: 5, type: "reefer", open, slots })
@@ -31,6 +52,19 @@ export const WALKTHROUGHS: Walkthrough[] = [
   {
     id: "collision", n: 1, title: "Two trucks, one door",
     subtitle: "Two carriers ask for door 4 at 14:00 in the same instant. The loser buys the slot from the winner.",
+    background: {
+      stakes: "Afternoon slots on the dry doors are scarce. Whoever gets 14:00 on door 4 unloads before the evening rush; the other waits an hour, and an hour is worth $120 to carrier-a and $60 to carrier-b.",
+      cast: [
+        { handle: "carrier-a", wants: "the earliest slot, and will pay up to $150 to get it" },
+        { handle: "carrier-b", wants: "to be paid if it moves later; it counters once for 20% more, then agrees" },
+        { handle: "pier9-ops", wants: "no double bookings and no phone calls" },
+      ],
+      story: [
+        "At 08:05 both carriers' agents ask the dock for door 4 at 14:00 in the same instant. In a spreadsheet world that is a double booking and six phone calls.",
+        "The dock is a Durable Actor and handles one request at a time: one truck books, the other gets the next hour and an offer. Then the agents settle it between themselves, in public, in #pier9, with money.",
+        "Watch for three things: the dock never double-books, the agents talk to each other and not to us, and the final swap is one atomic call that every screen sees at once.",
+      ],
+    },
     outcome: "T13 at 14:00, T14 at 15:00, $150 changed hands between the carriers, the dock never double-booked, nobody picked up a phone.",
     steps: [
       {
@@ -95,6 +129,19 @@ export const WALKTHROUGHS: Walkthrough[] = [
   {
     id: "doordown", n: 2, title: "Door 5 goes down",
     subtitle: "A reefer door fails. The cold load's agent buys its way back in two rounds; the dock pins the result.",
+    background: {
+      stakes: "Pier 9 has two refrigerated doors. When one fails, every cold load behind it is suddenly competing for the other, and a reefer truck that waits is a reefer truck burning fuel to stay cold. An hour is worth about $200 to carrier-c and $60 to carrier-b.",
+      cast: [
+        { handle: "carrier-c", wants: "the earliest reefer slot; budget $250 a deal; mentions the cold chain every time" },
+        { handle: "carrier-b", wants: "to be paid for moving T9 an hour later" },
+        { handle: "pier9-ops", wants: "the doors re-planned without a cascade and without a phone" },
+      ],
+      story: [
+        "At 09:20 the compressor on door 5 fails. carrier-c's T5 was due there at 10:00.",
+        "The dock re-plans in one call: only T5 moves, to the other reefer door an hour later, and the offer tells carrier-c who holds the 10:00 it would rather have. From there the two carriers haggle, two rounds, and settle for $200.",
+        "Watch for: only the affected truck moves; the offer names the counterparty; the dock checks door type and priority before it pins the deal; both carriers are better off and the warehouse paid nothing.",
+      ],
+    },
     outcome: "T5 unloads cold at 10:00 on door 6; carrier-b took $200 to wait an hour it values at $60; the warehouse paid nothing and T5 waits one hour less.",
     steps: [
       {
