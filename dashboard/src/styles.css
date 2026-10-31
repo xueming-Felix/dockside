@@ -237,3 +237,101 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   .ctl .bar i { animation: none; left: 0; width: 100%; }
   .step { transition: none; }
 }
+
+/* view switcher: Board plus one tab per agent. The clock and the counters leave no room beside the brand (none at 1920,
+   and the row already wraps at 1440), so the tabs take the header's second row, under the brand line. */
+.top { grid-template-rows: auto auto; row-gap: 7px; }
+.tabs { grid-column: 1 / -1; grid-row: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-width: 0; }
+.tab { display: inline-flex; align-items: center; gap: 7px; height: 27px; margin: 0; padding: 0 11px; font: inherit; font-size: 13px; font-weight: 500; color: var(--muted);
+  background: transparent; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; transition: color 0.15s, border-color 0.15s, background-color 0.15s; }
+.tab code { font-size: 12.5px; }
+.tab:hover { color: var(--fg); border-color: var(--muted); background: var(--panel); }
+.tab.active { color: var(--fg); background: rgba(108,194,230,0.12); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.tab .badge { font-style: normal; font-family: var(--mono); font-size: 10.5px; font-weight: 600; line-height: 17px; min-width: 19px; padding: 0 5px; border-radius: 999px;
+  background: var(--hot); color: #1b1400; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* carrier view: persona and trucks on the left (2/5), the Agent Relay inbox on the right (3/5) */
+.carrier { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 10px; min-height: 0; }
+.persona-panel { overflow-y: auto; }
+.persona { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 15px; border-bottom: 1px solid var(--line); }
+.persona h1 { margin: 0; font-size: 36px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; }
+.persona .role { margin: 0; font-size: 16px; color: var(--muted); }
+.persona .agent { align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; line-height: 1; padding: 5px 10px 5px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.persona .agent i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.persona .agent.on { color: var(--settle); border-color: rgba(63,191,127,0.5); background: rgba(63,191,127,0.08); }
+.persona .agent.on i { background: var(--settle); box-shadow: 0 0 8px var(--settle); }
+.persona .agent.off { color: var(--rejected); border-color: rgba(255,107,97,0.4); background: rgba(255,107,97,0.06); }
+.persona .agent.off i { background: var(--rejected); }
+.facts { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 8px; margin-top: 4px; }
+.fact { min-width: 0; padding: 7px 12px 6px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; }
+.fact b { display: block; font-family: var(--mono); font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fact span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.fact.trucks b { white-space: normal; overflow-wrap: anywhere; line-height: 1.2; } /* five truck ids wrap to a second line at 1440 instead of clipping */
+.persona .rule { margin: 4px 0 0; font-size: 14.5px; line-height: 1.4; font-style: italic; color: var(--accent); padding-left: 10px; border-left: 2px solid rgba(108,194,230,0.45); overflow-wrap: anywhere; }
+.mine { display: flex; flex-direction: column; gap: 6px; padding: 10px 18px 14px; }
+.mine h3 { margin: 0 0 3px; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; }
+.mine h3 small { color: var(--muted); font-weight: 400; margin-left: 8px; }
+.mine p { margin: 0; font-size: 14px; }
+.mine ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+/* a truck row borrows its block's colour: booked blue, arrived teal, done green, late amber, detention red, no-show hatched */
+.truck { display: flex; flex-direction: column; gap: 4px; padding: 7px 12px 7px 10px; border-left: 4px solid var(--booked); border-radius: 5px; background: var(--panel-2); }
+.truck .line { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; font-size: 15px; }
+.truck .line b { font-family: var(--mono); font-size: 16px; }
+.truck .sep { color: var(--muted); }
+.truck .st { font-style: normal; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 4px; background: var(--booked); color: #fff; white-space: nowrap; }
+.truck .hot { font-style: normal; font-family: var(--font); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; background: var(--hot); color: #1b1400; border-radius: 3px; padding: 1px 4px; }
+.truck .load { margin-left: auto; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.truck.arrived { border-left-color: var(--arrived); } .truck.arrived .st { background: var(--arrived); }
+.truck.done { border-left-color: var(--done); } .truck.done .st { background: var(--done); }
+.truck.late { border-left-color: var(--late); } .truck.late .st { background: var(--late); color: #1b1400; }
+.truck.detention { border-left-color: var(--detention); } .truck.detention .st { background: var(--detention); }
+.truck.noshow { border-left-color: var(--noshow); color: var(--muted); } .truck.noshow .st { background: repeating-linear-gradient(135deg, var(--noshow) 0 5px, #343e4a 5px 10px); color: #d5dde6; }
+.truck.none, .truck.tomorrow { border-left-color: var(--line); } .truck.none .st, .truck.tomorrow .st { background: var(--line); color: var(--muted); }
+.truck .offer { font-size: 13px; line-height: 1.35; color: var(--deal); border: 1px dashed rgba(242,185,75,0.6); border-radius: 4px; padding: 3px 8px; overflow-wrap: anywhere; }
+.door-row { display: grid; grid-template-columns: 76px 58px minmax(0, 1fr) auto; align-items: center; column-gap: 10px; padding: 9px 12px 9px 10px; border-left: 4px solid var(--settle); border-radius: 5px; background: var(--panel-2); font-size: 15px; }
+.door-row b { font-size: 16px; }
+.door-row .type { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; }
+.door-row .occupant { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.door-row em { font-style: normal; font-family: var(--mono); font-size: 12px; color: var(--settle); white-space: nowrap; }
+.door-row.closed { border-left-color: var(--detention); background: repeating-linear-gradient(135deg, var(--panel-2) 0 10px, #1a1519 10px 20px); }
+.door-row.closed b, .door-row.closed em { color: var(--detention); }
+
+/* the Agent Relay inbox: a chat, this agent on the right in the accent, everyone else on the left, replies hung under their root */
+.inbox-head { display: flex; align-items: center; gap: 9px; }
+.inbox-head .live { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--settle); box-shadow: 0 0 10px var(--settle); animation: livepulse 2s ease-in-out infinite; }
+.inbox-head .live.off { background: var(--muted); box-shadow: none; animation: none; }
+.inbox-head .sep { color: var(--muted); font-weight: 400; }
+.inbox-head code { color: var(--accent); font-size: 13px; }
+.inbox-head small { margin-left: auto; font-family: var(--mono); white-space: nowrap; }
+@keyframes livepulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.chat { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+.chat .empty-inbox { margin: auto; max-width: 30em; padding: 20px; text-align: center; font-size: 17px; line-height: 1.45; color: var(--muted); }
+.msg { position: relative; align-self: flex-start; max-width: 76%; display: flex; flex-direction: column; gap: 3px; padding: 7px 12px 6px; border-radius: 10px 10px 10px 3px;
+  background: var(--panel-2); border: 1px solid var(--line); border-left-width: 3px; }
+.msg.me { align-self: flex-end; border-radius: 10px 10px 3px 10px; background: rgba(108,194,230,0.13); border-color: rgba(108,194,230,0.45); }
+.msg.post { border-left-color: var(--post); } .msg.deal { border-left-color: var(--deal); }
+.msg.settle { border-left-color: var(--settle); background: rgba(63,191,127,0.10); } .msg.rejected { border-left-color: var(--rejected); background: rgba(255,107,97,0.10); }
+.msg.me.settle { background: rgba(63,191,127,0.14); }
+/* a reply steps in and hangs from a thin line that joins it to the bubble above it in the same thread */
+.msg.reply { margin-left: 30px; }
+.msg.reply::before { content: ""; position: absolute; left: -19px; top: -12px; width: 13px; height: calc(50% + 12px); border-left: 2px solid var(--line); border-bottom: 2px solid var(--line); border-bottom-left-radius: 7px; }
+.msg.me.reply { margin-left: 0; margin-right: 30px; }
+.msg.me.reply::before { left: auto; right: -19px; border-left: 0; border-right: 2px solid var(--line); border-bottom-left-radius: 0; border-bottom-right-radius: 7px; }
+.msg .who { font-family: var(--mono); font-size: 11.5px; color: var(--accent); }
+.msg .txt { margin: 0; font-size: 15px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg .txt mark { background: rgba(255,122,89,0.18); color: var(--hot); border-radius: 3px; padding: 0 2px; }
+.msg .meta { align-self: flex-end; font-family: var(--mono); font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+.inbox-foot { margin: 0; padding: 7px 14px; border-top: 1px solid var(--line); font-size: 12px; line-height: 1.35; color: var(--muted); }
+
+/* Below ~1600px the header row no longer fits its five parts: the counter labels wrap inside narrower tiles and the timer list narrows. */
+@media (max-width: 1600px) {
+  .timers { min-width: 200px; }
+  .tile { min-width: 84px; max-width: 150px; padding: 5px 10px; }
+  .tile span { display: block; white-space: normal; line-height: 1.15; }
+  .persona h1 { font-size: 32px; }
+  .msg { max-width: 82%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .inbox-head .live { animation: none; }
+  .tab { transition: none; }
+}

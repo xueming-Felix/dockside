@@ -16,8 +16,13 @@ export type DemoState = {
   mode: StageMode; scenes: Scene[]; story: Story | null // a driver that predates scenes reads as mode "keys" with no scenes
   relay: RelayStats | null // Agent Relay posting, when the driver has a workspace key
   manual: boolean; awaitingNext: boolean; nextTitle: string // step-by-step: a step is waiting for the presenter's Next
+  cast: CastMember[] // PLAN.md's personas, for the carrier tabs (empty on a driver that predates them)
+  relayFeed: RelayMsg[] // what Agent Relay's event stream delivered to the driver, oldest first; not the dock's mirror
 }
 export type RelayStats = { enabled: boolean; agents: number; queued: number; posted: number; failed: number; delivered: number; lastError: string }
+export type CastMember = { handle: string; role: string; trucks: string[]; hourUsd: number; budgetUsd: number; rule: string }
+/** One delivered Relay message: `thread` is the Relay id of the deal's root post (absent on the root itself), `at` epoch ms when the driver received it. */
+export type RelayMsg = { id: string; from: string; text: string; thread?: string; mentions: string[]; at: number }
 export type Notice = { kind: "error" | "info"; text: string }
 export type Driver = {
   state: DemoState | null; online: boolean; pending: string[]; notice: Notice | null
@@ -43,6 +48,15 @@ function normalize(s: Partial<DemoState> | null): DemoState | null {
     keys: Array.isArray(s.keys) ? s.keys : [], mode: s.mode === "story" ? "story" : "keys", scenes: Array.isArray(s.scenes) ? s.scenes : [], story,
     relay: s.relay && typeof s.relay === "object" ? s.relay : null,
     manual: !!s.manual, awaitingNext: !!s.awaitingNext, nextTitle: typeof s.nextTitle === "string" ? s.nextTitle : "",
+    cast: Array.isArray(s.cast) ? s.cast.filter(c => c && typeof c.handle === "string").map(c => ({
+      handle: c.handle, role: typeof c.role === "string" ? c.role : "", trucks: Array.isArray(c.trucks) ? c.trucks.map(String) : [],
+      hourUsd: Number(c.hourUsd) || 0, budgetUsd: Number(c.budgetUsd) || 0, rule: typeof c.rule === "string" ? c.rule : "",
+    })) : [],
+    relayFeed: Array.isArray(s.relayFeed) ? s.relayFeed.filter(m => m && typeof m.id === "string").map(m => ({
+      id: m.id, from: typeof m.from === "string" ? m.from.replace(/^@/, "").toLowerCase() : "?", text: typeof m.text === "string" ? m.text : "", // handles are lowercase; the inbox matches on them
+      thread: typeof m.thread === "string" && m.thread ? m.thread : undefined,
+      mentions: Array.isArray(m.mentions) ? m.mentions.map(x => String(x).toLowerCase()) : [], at: typeof m.at === "number" ? m.at : 0,
+    })) : [],
   }
 }
 

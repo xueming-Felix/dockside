@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import {
-  ACTOR_ID, DAY_END_MIN, DETENTION_FREE_MIN, hhmm,
+  ACTOR_ID, DAY_END_MIN, hhmm,
   type Appt, type Chat, type Event, type Snapshot, type Timer, type Truck,
 } from "../../shared/types"
+import { CarrierView, Tabs, useUnread, useView } from "./Carrier"
 import { Controls } from "./Controls"
 import { useDock, useSimMin } from "./dock"
-import { useDriver, type StageMode } from "./driver"
+import { useDriver, type CastMember, type RelayMsg, type StageMode } from "./driver"
+import { blockClass, lineKind, STATUS_WORD } from "./status"
 import { SceneControls, StoryPanel } from "./Story"
 
 const pct = (m: number) => `${(Math.max(0, Math.min(DAY_END_MIN, m)) / DAY_END_MIN) * 100}%`
 const HOURS = Array.from({ length: 10 }, (_, i) => i * 60)
 const ALARM_KINDS = new Set(["noshow", "detention", "auction_closed", "thread_expired", "auction_open", "claim"])
-// The word printed inside a block for the states a colour alone doesn't explain on a projector.
-const STATUS_WORD: Record<string, string> = { noshow: "no-show", detention: "detention", late: "late", done: "done" }
+const NO_FEED: RelayMsg[] = [], NO_CAST: CastMember[] = [] // stable empties while the driver is offline, so the memoised tabs don't re-render per tick
 // ?keys=1 forces the ten-key strip, ?story=1 forces story mode; otherwise the driver's `mode` decides (missing = keys).
 const FORCED_MODE: StageMode | null = (() => { const q = new URLSearchParams(location.search); return q.get("keys") === "1" ? "keys" : q.get("story") === "1" ? "story" : null })()
 
@@ -21,6 +22,9 @@ export function App() {
   const feed = useDock(actorId)
   const driver = useDriver()
   const mode: StageMode = FORCED_MODE ?? (driver.state?.mode === "story" ? "story" : "keys")
+  // Carrier tabs: #board or an agent's handle in the hash; the badges count Relay messages that landed while a tab was away.
+  const [view, setView] = useView()
+  const unread = useUnread(driver.state?.relayFeed ?? NO_FEED, view)
   const [cursor, setCursor] = useState<number | null>(null) // null = live
   // Replay scrubs through seeded snapshots only: the pre-seed snapshot would blank the board and hide the slider.
   const history = useMemo(() => feed.history.filter(s => s.seeded), [feed.history])
@@ -40,20 +44,24 @@ export function App() {
     <div className="app">
       <header className="top">
         <div className="brand"><b>Pier 9 Cold Storage</b><span>Dockside · agent-to-agent dock appointments</span></div>
+        <Tabs view={view} unread={unread} cast={driver.state?.cast ?? NO_CAST} onPick={setView} />
         <Clock snap={snap} sim={shownSim} />
         <Counters snap={snap} />
         <div className={`conn ${feed.status}`} title={feed.error ?? ""}><i />{feed.status === "open" ? "live" : feed.status}</div>
       </header>
-      <main className={`grid ${mode}`}>
-        <section className="panel gantt-panel">
-          <Gantt snap={snap} sim={shownSim} />
-          <Tomorrow snap={snap} />
-        </section>
-        {/* Story mode: the narration takes the top of the right column and the dock log steps aside; keys mode is unchanged. */}
-        {mode === "story" && <StoryPanel driver={driver} />}
-        <section className="panel feed-panel"><h2>#pier9 <small>{snap.chatter.length} lines</small></h2><Feed chatter={snap.chatter} /></section>
-        {mode === "keys" && <section className="panel events-panel"><h2>Dock log <small>alarms highlighted</small></h2><Events events={snap.events} /></section>}
-      </main>
+      {/* A carrier tab swaps the board for that agent's view; header, replay and the scene strip stay, so steps run from any tab. */}
+      {view !== "board" ? <CarrierView handle={view} snap={snap} sim={shownSim} state={driver.state} /> : (
+        <main className={`grid ${mode}`}>
+          <section className="panel gantt-panel">
+            <Gantt snap={snap} sim={shownSim} />
+            <Tomorrow snap={snap} />
+          </section>
+          {/* Story mode: the narration takes the top of the right column and the dock log steps aside; keys mode is unchanged. */}
+          {mode === "story" && <StoryPanel driver={driver} />}
+          <section className="panel feed-panel"><h2>#pier9 <small>{snap.chatter.length} lines</small></h2><Feed chatter={snap.chatter} /></section>
+          {mode === "keys" && <section className="panel events-panel"><h2>Dock log <small>alarms highlighted</small></h2><Events events={snap.events} /></section>}
+        </main>
+      )}
       <Replay history={history} cursor={cursor} setCursor={setCursor} />
       {strip}
     </div>
@@ -95,13 +103,6 @@ function Counters({ snap }: { snap: Snapshot }) {
     ["phone calls", String(c.phoneCalls)], ["moves", String(c.moves)], ["backhauls", String(c.backhauls)],
   ]
   return <div className="counters">{tiles.map(([k, v]) => <div key={k} className="tile"><b>{v}</b><span>{k}</span></div>)}</div>
-}
-
-function blockClass(a: Appt, sim: number, expected: Set<string>): string {
-  if (a.status === "done") return "done"
-  if (a.status === "noshow") return "noshow"
-  if (a.status === "arrived" || a.status === "unloading") return a.arrivedMin !== undefined && sim >= a.arrivedMin + DETENTION_FREE_MIN ? "detention" : "arrived"
-  return sim > a.startMin + 5 && expected.has(a.truckId) ? "late" : "booked"
 }
 
 function Gantt({ snap, sim }: { snap: Snapshot; sim: number }) {
@@ -163,15 +164,6 @@ function Tomorrow({ snap }: { snap: Snapshot }) {
       {claims.map(c => <span key={c.truckId} className={`claim ${c.status}`}><b>{c.truckId}</b> detention ${c.amount} · {c.status}</span>)}
     </div>
   )
-}
-
-function lineKind(text: string): string {
-  if (/^SETTLE\b/.test(text)) return "settle"
-  if (/^REJECTED\b/.test(text)) return "rejected"
-  if (/^(OFFER|AUCTION|VERIFY)\b/.test(text)) return "post"
-  if (/^(SWAP\?|COUNTER|AGREE|BID)\b/.test(text)) return "deal"
-  if (/^(accept|counter|decline)\b/i.test(text)) return "answer"
-  return ""
 }
 
 function Feed({ chatter }: { chatter: Chat[] }) {
