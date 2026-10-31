@@ -5,16 +5,22 @@ import {
 } from "../../shared/types"
 import { Controls } from "./Controls"
 import { useDock, useSimMin } from "./dock"
+import { useDriver, type StageMode } from "./driver"
+import { SceneControls, StoryPanel } from "./Story"
 
 const pct = (m: number) => `${(Math.max(0, Math.min(DAY_END_MIN, m)) / DAY_END_MIN) * 100}%`
 const HOURS = Array.from({ length: 10 }, (_, i) => i * 60)
 const ALARM_KINDS = new Set(["noshow", "detention", "auction_closed", "thread_expired", "auction_open", "claim"])
 // The word printed inside a block for the states a colour alone doesn't explain on a projector.
 const STATUS_WORD: Record<string, string> = { noshow: "no-show", detention: "detention", late: "late", done: "done" }
+// ?keys=1 forces the ten-key strip, ?story=1 forces story mode; otherwise the driver's `mode` decides (missing = keys).
+const FORCED_MODE: StageMode | null = (() => { const q = new URLSearchParams(location.search); return q.get("keys") === "1" ? "keys" : q.get("story") === "1" ? "story" : null })()
 
 export function App() {
   const actorId = new URLSearchParams(location.search).get("actor") || ACTOR_ID
   const feed = useDock(actorId)
+  const driver = useDriver()
+  const mode: StageMode = FORCED_MODE ?? (driver.state?.mode === "story" ? "story" : "keys")
   const [cursor, setCursor] = useState<number | null>(null) // null = live
   // Replay scrubs through seeded snapshots only: the pre-seed snapshot would blank the board and hide the slider.
   const history = useMemo(() => feed.history.filter(s => s.seeded), [feed.history])
@@ -23,10 +29,11 @@ export function App() {
   const shownSim = cursor === null ? sim : snap?.simMin ?? 0
 
   // The strip stays up before the first seed too: "Reset 08:00" is how the presenter seeds the dock from the projector.
+  const strip = mode === "story" ? <SceneControls actorId={actorId} driver={driver} /> : <Controls actorId={actorId} driver={driver} />
   if (!snap || !snap.seeded) return (
     <div className="app app-empty">
       <Empty status={feed.status} error={feed.error} actorId={actorId} />
-      <Controls actorId={actorId} />
+      {strip}
     </div>
   )
   return (
@@ -37,16 +44,18 @@ export function App() {
         <Counters snap={snap} />
         <div className={`conn ${feed.status}`} title={feed.error ?? ""}><i />{feed.status === "open" ? "live" : feed.status}</div>
       </header>
-      <main className="grid">
+      <main className={`grid ${mode}`}>
         <section className="panel gantt-panel">
           <Gantt snap={snap} sim={shownSim} />
           <Tomorrow snap={snap} />
         </section>
+        {/* Story mode: the narration takes the top of the right column and the dock log steps aside; keys mode is unchanged. */}
+        {mode === "story" && <StoryPanel driver={driver} />}
         <section className="panel feed-panel"><h2>#pier9 <small>{snap.chatter.length} lines</small></h2><Feed chatter={snap.chatter} /></section>
-        <section className="panel events-panel"><h2>Dock log <small>alarms highlighted</small></h2><Events events={snap.events} /></section>
+        {mode === "keys" && <section className="panel events-panel"><h2>Dock log <small>alarms highlighted</small></h2><Events events={snap.events} /></section>}
       </main>
       <Replay history={history} cursor={cursor} setCursor={setCursor} />
-      <Controls actorId={actorId} />
+      {strip}
     </div>
   )
 }
