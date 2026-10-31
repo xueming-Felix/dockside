@@ -99,3 +99,9 @@
 **User direction:** "we should have two views for demo. one is the real dashboard we built before … and the second view is step by step real illustration of what happens in these scenarios … only for illustration so we don't need to make real triggers" (17:58).
 
 **Assistant choices and why:** the live board returns to the ten-key v1 mode (real actor, real Relay posting) because that is the system; the walkthrough is pure client-side data so it can never stall during the explanation. Its content is the same beats the live run performs (same calls, same lines), frozen, so the two views tell one story. Story mode (presenter-paced live scenes) stays available behind an environment flag rather than being deleted.
+
+## 2026-10-31 — Walkthrough as diagrams, minimal text
+
+**User direction:** "for the dashboard, i think it have too many texts, let's illustrate by diagrams" and "with minimal text" (18:45).
+
+**Assistant choices and why:** one fixed system picture on every walkthrough screen (agents inside Agent Relay, the dispatcher, the Dock actor with its mini board and timers, the screens) so the room learns the topology once; each step animates only its own calls and messages as labelled arrows and speech bubbles on that picture. Words shrink to the step title, a technology badge and one takeaway sentence; the previous logs and paragraphs stay reachable behind a details toggle rather than being deleted. Content for the arrows lives in the data file (`flows`, `speech`, `chips`) so the picture and the live run keep telling the same story.
