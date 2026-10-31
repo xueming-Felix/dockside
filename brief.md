@@ -30,6 +30,7 @@ On 2026-10-31 at 11:40 the owner asked Felix-Claude to start Person A's implemen
 - `docs/demo-runbook.md` maps the ten keys to this seed and lists fallbacks; `actor/scripts/{seed,peek,listen}.ts` reset, inspect and tail an actor.
 - Full scenario proven on the runtime (13:05, subagent): `actor/scripts/scenario.ts` plays all ten keys at 300x against any actor id; 52/52 checks pass, all six alarms fired by themselves within ~100–190 ms of their due time, `tick()` never needed. Findings folded into `docs/demo-runbook.md` (gate routine, auction timings, key 8 trigger) and `shared/README.md`.
 - Actor hardenings after that run (13:30): arriving in the same minute as the arrival check reverts the no-show and withdraws the empty auction; detention claims and no-show auction closes are computed from the timer's due minute; `openThread` validates the id and emits `thread_open`. 22 tests pass. The generated client is committed so a fresh clone runs the dashboard with Bun alone; the grant server honours `HOST` and is reachable over Tailscale at http://100.117.209.6:7110.
+- The same scenario script ran 52/52 against the deployed actor at 13:36 (six alarms on their own, 70–122 ms lag), so Person A's half of the 14:30 integration is rehearsed on the cloud.
 - Status page for the owner: https://claude.ai/artifact/GLxbt3J88EXQu4e2FXrnCg (private artifact, republished at milestones).
 
 See the 2026-10-31 "Person A implementation" entry in [decisions.md](decisions.md) for the contract additions, the door-5 reconciliation and the runtime constraints.
