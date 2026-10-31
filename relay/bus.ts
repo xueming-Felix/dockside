@@ -79,11 +79,22 @@ function saveToken(name: string, token: string) {
   writeFileSync(TOKENS_PATH, JSON.stringify(store, null, 2));
 }
 
+const DEBUG = process.env.RELAY_DEBUG === "1";
+
+function retryable(e: unknown): boolean {
+  const err = e as { status?: number; statusCode?: number; retryable?: boolean; message?: string };
+  const status = err.status ?? err.statusCode ?? 0;
+  if (status === 429 || status >= 500) return true;
+  if (err.retryable) return true;
+  return /write capacity is busy|rate.?limit|retry with backoff/i.test(err.message ?? "");
+}
+
 export class RelayBus implements Bus {
   private relay: AgentRelay;
   private subs = new Set<(m: BusMsg) => void>();
   private seen = new Set<string>();
   private clients = new Map<string, RelayAgentClient>();
+  private sendTimes = new Map<string, number>();   // msgId -> local send timestamp (RELAY_DEBUG)
 
   constructor(workspaceKey = process.env.RELAY_WORKSPACE_KEY) {
     if (!workspaceKey) throw new Error("RELAY_WORKSPACE_KEY is not set");
@@ -94,6 +105,10 @@ export class RelayBus implements Bus {
       const channelName = msg.channel?.name ?? ev.envelope.channel?.name;
       if (channelName && channelName !== CHANNEL) return;
       this.seen.add(msg.id);
+      if (DEBUG) {
+        const sent = this.sendTimes.get(msg.id);
+        if (sent != null) console.log(`[relay-debug] ${msg.id} delivery latency ${Date.now() - sent}ms`);
+      }
       const bm: BusMsg = {
         id: msg.id,
         from: msg.from?.name ?? ev.envelope.from?.name ?? "?",
@@ -114,10 +129,25 @@ export class RelayBus implements Bus {
     return {
       name,
       async post(text: string, opts?: { thread?: string }) {
-        const m = opts?.thread
-          ? await client.reply({ messageId: opts.thread, text })
-          : await client.sendMessage({ to: `#${CHANNEL}`, text });
-        return { id: m.id };
+        const t0 = Date.now();
+        let lastErr: unknown;
+        for (const backoff of [0, 250, 500, 1000]) {
+          if (backoff) await new Promise((r) => setTimeout(r, backoff));
+          try {
+            const m = opts?.thread
+              ? await client.reply({ messageId: opts.thread, text })
+              : await client.sendMessage({ to: `#${CHANNEL}`, text });
+            if (DEBUG) {
+              self.sendTimes.set(m.id, t0);
+              console.log(`[relay-debug] ${m.id} post() ${Date.now() - t0}ms`);
+            }
+            return { id: m.id };
+          } catch (e) {
+            lastErr = e;
+            if (!retryable(e)) throw e;
+          }
+        }
+        throw lastErr;
       },
     };
   }

@@ -13,5 +13,8 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": [".", "../shared"]
+  "include": [".", "../shared"],
+  // terse-smoke/ and generated/ belong to another worker — excluded so their
+  // in-progress files don't break this package's typecheck.
+  "exclude": ["terse-smoke", "generated", "node_modules"]
 }

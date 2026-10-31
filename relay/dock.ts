@@ -79,7 +79,7 @@ export class TerseDock implements DockClient {
     // so the specifier is computed to keep tsc happy.
     const genPath = "./generated/index.js";
     const gen: any = await import(genPath);
-    const actorId = process.env.DOCK_ACTOR_ID ?? "pier9:2026-10-31";
+    const actorId = process.env.DOCK_ACTOR_ID ?? "pier9-2026-10-31";
     d.actor = gen.actors.Dock.get(actorId);
     await d.connectSnapshots(gen, actorId);
     return d;
@@ -94,8 +94,12 @@ export class TerseDock implements DockClient {
     this.ws = ws;
     ws.onmessage = (ev: MessageEvent) => {
       try {
-        const snap = JSON.parse(String(ev.data)) as Snapshot;
-        for (const cb of this.snapshotSubs) cb(snap);
+        const msg = JSON.parse(String(ev.data)) as Record<string, unknown>;
+        // skip non-Snapshot frames: runtime emits {type:"state"|"state_update"}
+        // for @Emittable fields; a Snapshot has simMin + events.
+        if (typeof msg !== "object" || msg === null) return;
+        if ("type" in msg || !("simMin" in msg) || !("events" in msg)) return;
+        for (const cb of this.snapshotSubs) cb(msg as unknown as Snapshot);
       } catch {
         /* non-snapshot frame */
       }
@@ -162,9 +166,10 @@ export class TerseDock implements DockClient {
   }
   say(from: string, to: string, text: string, thread?: string) {
     // CONTRACT GAP (needs Person A): contract signature is say(from,to,text);
-    // pass thread only when the deployed stub accepts it (arity check), else drop it.
-    const fn = this.actor.say as (...a: unknown[]) => Promise<{ seq: number }>;
-    return fn.length >= 4 ? fn.call(this.actor, from, to, text, thread) : fn.call(this.actor, from, to, text);
+    // generated methods are `async (...args)` so arity checks always drop the
+    // 4th arg — the stub strips trailing undefined args, so always pass thread.
+    return (this.actor.say as (...a: unknown[]) => Promise<{ seq: number }>)
+      .call(this.actor, from, to, text, thread);
   }
   snapshot() { return this.actor.snapshot() as Promise<Snapshot>; }
 

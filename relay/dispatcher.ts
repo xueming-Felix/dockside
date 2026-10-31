@@ -15,9 +15,9 @@ import { hhmm, SLOT_MIN } from "./clock.js";
 import { DISPATCHER_HANDLE } from "./personas.js";
 import { DOOR_TYPES } from "./brain.js";
 
-const THREAD_DEADLINE_MIN = 10;
+const THREAD_DEADLINE_MIN = Number(process.env.THREAD_DEADLINE_MIN ?? 10);
 const AUCTION_WINDOW_MIN = 180;
-const AUCTION_CLOSE_MIN = 10;
+const AUCTION_CLOSE_MIN = Number(process.env.AUCTION_CLOSE_MIN ?? 10);
 
 export type DispatcherHandle = {
   agent: BusAgent;
@@ -54,9 +54,18 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
     queue = queue.then(fn).catch((e) => console.warn(`[dispatcher] ${e}`));
   };
 
+  // Ordered post queue — bus posts never block the actor queue.
+  let postQ: Promise<unknown> = Promise.resolve();
+  const postLater = (text: string, thread?: string): Promise<string> => {
+    const p = postQ.then(() => agent.post(text, { thread }).then((r) => r.id));
+    postQ = p.catch(() => {});
+    return p;
+  };
+
   let lastSnap: Snapshot | null = null;
   let lastSeq = 0;
-  const offerThreads = new Map<string, string>();
+  const offerThreads = new Map<string, string>();        // offerId -> relay thread root
+  const rootToOffer = new Map<string, string>();         // relay thread root -> offerId
   const pendingVerifies = new Map<string, PendingVerify>();
   const auctionedSlots = new Set<string>();
   const pendingWaivers = new Set<string>();
@@ -69,9 +78,11 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
 
   const simNow = () => lastSnap?.simMin ?? 0;
 
-  async function post(text: string, thread?: string): Promise<string> {
-    const { id } = await agent.post(text, { thread });
-    return id;
+  /** relay thread id -> actor thread id (`th-${offerId}`) so the dashboard
+   *  indents chatter under the right thread */
+  function actorThreadOf(msg: BusMsg): string | undefined {
+    const offerId = rootToOffer.get(msg.thread ?? msg.id);
+    return offerId ? `th-${offerId}` : msg.thread;
   }
 
   function trackAppts(snap: Snapshot) {
@@ -126,12 +137,16 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
   async function postOffer(offer: Offer, wanted?: { door: number; startMin: number }) {
     const snap = lastSnap ?? (await dock.snapshot());
     const closes = Math.round(snap.simMin + THREAD_DEADLINE_MIN);
+    // actor thread first (inside the actor queue), then the Relay post on the
+    // post queue — the post round-trip never blocks actor calls.
+    await dock.openThread(`th-${offer.id}`, offer.id, closes);
     const holder = findHolder(offer, snap, wanted);
     const text = fmt.offer({ offerId: offer.id, truckId: offer.truckId, door: offer.door,
       startMin: offer.startMin, reason: offer.reason, holder, closesMin: closes });
-    const root = await post(text);
-    offerThreads.set(offer.id, root);
-    await dock.openThread(root, offer.id, closes);
+    void postLater(text).then((root) => {
+      offerThreads.set(offer.id, root);
+      rootToOffer.set(root, offer.id);
+    });
   }
   async function postOffers(offers: Offer[] | undefined) {
     for (const o of offers ?? []) await postOffer(o);
@@ -171,7 +186,7 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
     auctionedSlots.add(`${door}@${startMin}`);
     const closes = Math.round(simNow() + AUCTION_CLOSE_MIN);
     const { auction } = await dock.openAuction(door, startMin, closes);
-    await post(fmt.auction({ auctionId: auction.id, door, startMin, why, closesMin: closes }));
+    postLater(fmt.auction({ auctionId: auction.id, door, startMin, why, closesMin: closes }));
   }
 
   // ---- SETTLE ------------------------------------------------------------------
@@ -185,10 +200,15 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
 
   async function handleSettle(m: BusMsg, p: Extract<Parsed, { verb: "SETTLE" }>) {
     const snap = lastSnap ?? (await dock.snapshot());
-    // already settled once — a replayed/conflicting SETTLE loses
+    // already settled once — a replayed/conflicting SETTLE loses; a SETTLE on
+    // an expired thread loses to the clock
     const prior = snap.threads.find((t) => t.offerId === p.offerId);
     if (prior && prior.status === "settled") {
-      await post(fmt.rejected(p.offerId, "thread already settled"), m.thread);
+      postLater(fmt.rejected(p.offerId, "thread already settled"), m.thread);
+      return;
+    }
+    if (prior && prior.status === "expired") {
+      postLater(fmt.rejected(p.offerId, "thread closed, the clock decided"), m.thread);
       return;
     }
     const pairs: [string, string][] = [];
@@ -202,7 +222,7 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
         slotsOf(snap, b.truckId).some((s) => s.door === a.door && s.startMin === a.startMin) &&
         slotsOf(snap, a.truckId).some((s) => s.door === b.door && s.startMin === b.startMin));
       if (partnerIdx < 0) {
-        await post(fmt.rejected(p.offerId,
+        postLater(fmt.rejected(p.offerId,
           `${a.truckId} door ${a.door} ${hhmm(a.startMin)} is not a swap of current slots`), m.thread);
         return;
       }
@@ -211,19 +231,18 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
     }
     for (const [ta, tb] of pairs) {
       const r = await dock.swap(ta, tb);
-      if (!r.ok) { await post(fmt.rejected(p.offerId, r.reason ?? "swap failed"), m.thread); return; }
+      if (!r.ok) { postLater(fmt.rejected(p.offerId, r.reason ?? "swap failed"), m.thread); return; }
     }
     for (const pay of p.pays) {
       const r = await dock.pay(pay.from, pay.to, pay.usd);
-      if (!r.ok) { await post(fmt.rejected(p.offerId, r.reason ?? "pay failed"), m.thread); return; }
+      if (!r.ok) { postLater(fmt.rejected(p.offerId, r.reason ?? "pay failed"), m.thread); return; }
     }
     for (const w of p.waives) {
       const r = await dock.resolveClaim(w, "waived");
       if (!r.claim) pendingWaivers.add(w);
     }
-    const threadId = m.thread ?? offerThreads.get(p.offerId);
-    if (threadId) await dock.settleThread(threadId);
-    await post(fmt.confirmed(p.offerId, "settled by the actor"), m.thread);
+    await dock.settleThread(`th-${p.offerId}`);
+    postLater(fmt.confirmed(p.offerId, "settled by the actor"), m.thread);
   }
 
   // ---- actions -----------------------------------------------------------------
@@ -238,14 +257,14 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
       pendingVerifies.set(msg.thread ?? msg.id, {
         handle: msg.from, truckId: p.truckId, door: p.door, startMin: p.startMin, load: p.load,
       });
-      await post(fmt.verifyAsk(msg.from, p.load ?? "?",
+      postLater(fmt.verifyAsk(msg.from, p.load ?? "?",
         `unknown carrier requesting door ${p.door} at ${hhmm(p.startMin)} — @broker, yours?`), msg.thread ?? msg.id);
       return;
     }
     const truckId = p.truckId ?? snap.trucks.find((t) => t.carrier === msg.from)?.id ?? "T0";
     const r = await dock.request(msg.from, truckId, p.door, p.startMin);
     if (r.offer) await postOffer(r.offer, { door: p.door, startMin: p.startMin });
-    else if (r.appt) await post(`booked ${truckId} door ${p.door} ${hhmm(p.startMin)}`, msg.thread);
+    else if (r.appt) postLater(`booked ${truckId} door ${p.door} ${hhmm(p.startMin)}`, msg.thread);
   }
 
   async function actOn(msg: BusMsg, p: Parsed) {
@@ -257,21 +276,18 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
         set.add(msg.from);
         carrierBids.set(p.auctionId, set);
         const r = await dock.bid(p.auctionId, p.truckId, p.readyMin);
-        if (!r.ok) await post(fmt.rejected(p.auctionId, r.reason ?? "bid failed"), msg.thread);
+        if (!r.ok) postLater(fmt.rejected(p.auctionId, r.reason ?? "bid failed"), msg.thread);
         return;
       }
       case "accept": {
         const r = await dock.accept(p.offerId);
-        if (!r.ok) await post(fmt.rejected(p.offerId, r.reason ?? "accept failed"), msg.thread);
-        else {
-          const th = msg.thread ?? offerThreads.get(p.offerId);
-          if (th) await dock.settleThread(th);
-        }
+        if (!r.ok) postLater(fmt.rejected(p.offerId, r.reason ?? "accept failed"), msg.thread);
+        else await dock.settleThread(`th-${p.offerId}`);
         return;
       }
       case "counter": {
         const r = await dock.counter(p.offerId, p.door, p.startMin);
-        if (!r.ok) await post(fmt.rejected(p.offerId, r.reason ?? "counter failed"), msg.thread);
+        if (!r.ok) postLater(fmt.rejected(p.offerId, r.reason ?? "counter failed"), msg.thread);
         else await postOffers(r.offers);
         return;
       }
@@ -288,9 +304,9 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
           if (p.answer === "yes") {
             const r = await dock.request(v.handle, v.truckId ?? "T0", v.door, v.startMin);
             if (r.offer) await postOffer(r.offer);
-            else if (r.appt) await post(`booked ${v.truckId ?? "?"} door ${v.door} ${hhmm(v.startMin)}`, msg.thread);
+            else if (r.appt) postLater(`booked ${v.truckId ?? "?"} door ${v.door} ${hhmm(v.startMin)}`, msg.thread);
           } else {
-            await post(fmt.refused(v.handle, "the broker won't vouch for the load"), msg.thread);
+            postLater(fmt.refused(v.handle, "the broker won't vouch for the load"), msg.thread);
           }
         }
         return;
@@ -334,7 +350,7 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
               (snap.trucks.find((t) => t.id === y.truckId)?.priority ?? 0) -
               (snap.trucks.find((t) => t.id === x.truckId)?.priority ?? 0))[0]!;
             const r = await dock.award(a.id, winner.truckId);
-            if (r.auction) await post(fmt.awarded(a.id, winner.truckId, a.door, a.startMin));
+            if (r.auction) postLater(fmt.awarded(a.id, winner.truckId, a.door, a.startMin));
           }
           break;
         }
@@ -342,7 +358,7 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
           const offer = snap.offers.find((o) => o.id === e.offerId);
           if (offer && offer.status === "open") {
             await dock.accept(offer.id);
-            await post(fmt.expired(offer.id, offer.truckId, offer.door, offer.startMin), offerThreads.get(offer.id));
+            postLater(fmt.expired(offer.id, offer.truckId, offer.door, offer.startMin), offerThreads.get(offer.id));
           }
           break;
         }
@@ -354,11 +370,11 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
         case "empty": {
           const appt = snap.appts.find((a) => a.truckId === e.truckId && a.status === "done");
           if (appt) noAuctionSlots.add(`${appt.door}@${appt.startMin}`);
-          await post(fmt.empty(e.truckId ?? "?", appt?.door ?? 0));
+          postLater(fmt.empty(e.truckId ?? "?", appt?.door ?? 0));
           break;
         }
         case "tomorrow": {
-          if (e.truckId) await post(fmt.tomorrow(e.truckId));
+          if (e.truckId) postLater(fmt.tomorrow(e.truckId));
           break;
         }
         default: break;
@@ -375,7 +391,7 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
   bus.onMessage((msg) => {
     const to = msg.mentions[0] ?? "#pier9";
     later(async () => {
-      await dock.say(msg.from, to, msg.text, msg.thread);
+      await dock.say(msg.from, to, msg.text, actorThreadOf(msg));
       if (msg.from !== DISPATCHER_HANDLE) await actOn(msg, parseLine(msg.text));
     });
   });
@@ -420,6 +436,7 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
     snapshot: () => call(() => dock.snapshot()),
     async close() {
       await queue.catch(() => {});
+      await postQ.catch(() => {});
     },
   };
 }

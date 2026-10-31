@@ -83,6 +83,32 @@ test("full scenario: keys 1-10 against MockDock + LocalBus + rules", async () =>
   expect(S.speed).toBe(0);
 }, 90_000);
 
+test("SETTLE on an expired thread gets REJECTED — the clock decided", async () => {
+  const dock = new MockDock();
+  const bus = new LocalBus();
+  const disp = await startDispatcher(dock, bus);
+  const msgs: { id: string; text: string }[] = [];
+  bus.onMessage((m) => msgs.push({ id: m.id, text: m.text }));
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  await disp.inject.seed({ ...SEED, speed: 0 });
+  await disp.inject.request("carrier-b", "T2", 4, 360);
+  await disp.inject.request("carrier-a", "T4", 4, 360);
+  await sleep(20);
+  const offerMsg = msgs.find((m) => /OFFER o\d+/.test(m.text))!;
+  const offerId = /OFFER (o\d+)/.exec(offerMsg.text)![1]!;
+  // the dispatcher opened th-${offerId}; force it expired
+  (dock as any).threads.find((t: any) => t.id === `th-${offerId}`)!.status = "expired";
+
+  const agent = await bus.register("carrier-a");
+  await agent.post(`SETTLE ${offerId}: T4 door 4 14:00 · T2 door 4 15:00 · pay carrier-a→carrier-b $150`, { thread: offerMsg.id });
+  await sleep(60);
+  const text = msgs.map((m) => m.text).join("\n");
+  expect(text).toContain(`REJECTED ${offerId} — thread closed, the clock decided`);
+  await disp.close();
+  await bus.close();
+}, 30_000);
+
 test("conflicting double SETTLE: the second one gets REJECTED", async () => {
   const dock = new MockDock();
   const bus = new LocalBus();

@@ -56,7 +56,9 @@ function concernsMe(p: Persona, state: AgentState, msg: BusMsg, parsed: Parsed):
 }
 
 export async function startAgents(bus: Bus, opts: AgentsOptions = {}): Promise<AgentsHandle> {
-  const [dMin, dMax] = opts.replyDelayMs ?? [800, 2000];
+  const envDelay = process.env.AGENT_DELAY_MS?.split(",").map(Number);
+  const [dMin, dMax] = opts.replyDelayMs ??
+    (envDelay?.length === 2 && envDelay.every(Number.isFinite) ? [envDelay[0]!, envDelay[1]!] : [800, 2000]);
   const nowMin = opts.nowMin ?? (() => 0);
   const brain = opts.brain ?? makeBrain();
   const runtimes = new Map<string, AgentRuntime>();

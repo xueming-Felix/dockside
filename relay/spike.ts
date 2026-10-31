@@ -12,8 +12,20 @@ if (!key) {
 
 const relay = new AgentRelay({ workspaceKey: key });
 
-const dock = await relay.workspace.register({ name: "dock-spike", type: "agent" });
-const carrierA = await relay.workspace.register({ name: "carrier-a-spike", type: "agent" });
+async function registerOrReuse(name: string) {
+  try {
+    return await relay.workspace.register({ name, type: "agent" });
+  } catch (e) {
+    if ((e as { code?: string }).code === "name_conflict") {
+      await relay.workspace.release({ name, deleteAgent: true }).catch(() => {});
+      return await relay.workspace.register({ name, type: "agent" });
+    }
+    throw e;
+  }
+}
+
+const dock = await registerOrReuse("dock-spike");
+const carrierA = await registerOrReuse("carrier-a-spike");
 console.log(`registered: ${dock.name}, ${carrierA.name}`);
 
 let got = false;
