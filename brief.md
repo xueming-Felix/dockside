@@ -25,7 +25,7 @@ On 2026-10-31 at 11:40 the owner asked Felix-Claude to start Person A's implemen
 - `shared/types.ts` (contract, with marked additions) and `shared/pier9.ts` (default seed) exist.
 - `actor/` holds the `Dock` actor (`src/actors.ts`), the pure state machine (`src/model.ts`), 19 passing tests and `scripts/drive.ts`. It compiles and runs on the local Terse runtime; the drive script exercised collision, swap, pay, arrive, eta, door-down and counter correctly. Actor id `pier9-2026-10-31` (Terse rejects the plan's colon).
 - `dashboard/` holds the Vite + React board (Gantt, chatter feed, clock with next timers, counters, replay slider) and the Bun grant server; written, browser check pending.
-- Terse login and API token are in place on the Mac mini (`actor/.env`, git-ignored). Deploy was in progress when this was written; `TERSE_ACTOR_URL` goes to Person B afterwards.
+- Deployed at 12:43 to Terse project `dockside`: `TERSE_ACTOR_URL=https://api.useterse.ai/cmvwslt4400u1jy2a800ykfka/actors`; the key is in `actor/.env` and both are in `actor/.env.cloud` (git-ignored). The drive script passed against the deployment. Person B was given the URL in the topic. Because the cloud build only sees `actor/`, the contract is vendored into `actor/src/shared/types.ts` with a test that fails if it drifts; `bun run deploy` syncs and deploys.
 - Status page for the owner: https://claude.ai/artifact/GLxbt3J88EXQu4e2FXrnCg (private artifact, republished at milestones).
 
 See the 2026-10-31 "Person A implementation" entry in [decisions.md](decisions.md) for the contract additions, the door-5 reconciliation and the runtime constraints.

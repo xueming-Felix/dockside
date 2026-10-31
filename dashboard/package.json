@@ -8,7 +8,9 @@
     "server": "bun --watch server.ts",
     "build": "vite build",
     "start": "bun server.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "start:cloud": "bash -c 'set -a; source ../actor/.env.cloud; set +a; bun server.ts'",
+    "server:cloud": "bash -c 'set -a; source ../actor/.env.cloud; set +a; bun --watch server.ts'"
   },
   "dependencies": {
     "react": "^18.3.1",
