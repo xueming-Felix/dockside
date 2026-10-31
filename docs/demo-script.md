@@ -1,10 +1,16 @@
-# Dockside · the 5-minute demo script (story mode)
+# Dockside · the demo script (two views)
 
-Three scene buttons at the bottom of the dashboard; pick two (scene 3 is optional). A scene runs one step at a time: after each step the strip shows a pulsing **Next step** button (space, enter or → also work) and waits for you, so you narrate at your own pace. The narration panel beside the Gantt fills in as each step runs: who did it (Durable Actor / Agents on Relay / Alarm / Dispatcher), what happened, why it matters, and the exact lines the agents exchanged, appearing one by one. Every agent line is also posted by that agent in #pier9 on Agent Relay; the carrier tabs in the header show each agent's own Relay inbox. Keys 1/2/3 start scenes, R resets.
+Two views, one page (http://100.117.209.6:7110, tabs in the header):
+
+- **Board** (view 1, the live system): the ten trigger buttons at the bottom, the Gantt, the dock log, the #pier9 feed, the counters. Everything is real: the deployed Dock actor on Terse, every agent line posted by that agent in #pier9 on Agent Relay, alarms firing on their own. Use it for the "it actually runs" part and for questions. Keys 1–9, 0, R, A are shortcuts; Auto plays the whole day hands-free.
+- **Walkthrough** (view 2, the explanation): scenarios 1 and 2 frozen as steps. Prev / Next (← → or space) move one beat at a time; each beat shows what the Dock actor did and published, what the two agents' inboxes looked like, and why it matters. Nothing is live there, so nothing can fail or make you wait. Use it to teach the room the mechanism before or after the live run.
+- **carrier-a … pier9-ops** tabs: each agent's persona and its own Agent Relay inbox, filled from Relay's event stream with message ids while the live board runs.
+
+Suggested order (five minutes): open on the Walkthrough, scenario 1 (2 minutes); switch to the Board, Reset, run keys 1 and 4 live and flip to a carrier tab while the agents talk (2 minutes); close on the counters.
 
 ## Setup, five minutes before
 
-Projector: http://100.117.209.6:7110 full screen (or on the laptop: `cd dashboard && bun run build && bun run start:cloud`, then http://127.0.0.1:7110). Click **Reset**: the board snaps to 08:00 and the clock runs slowly (5x), so there is no rush between scenes. The old ten-key board is still there at `?keys=1` if ever needed.
+Projector: http://100.117.209.6:7110 full screen. The grant server registers the eight agents on Agent Relay at startup (about 90 s); the strip's status line says "Relay: n/8 agents joining" until they are in. Click **Reset** on the Board once before the run: the board snaps to 08:00 at 60x. If you want the live run slow, it also works to press one key, talk, press the next.
 
 ## Open · 20 s
 
