@@ -81,3 +81,9 @@
 - Stopped on the owner's word with the full-day draft rendering; the ten-key cut is kept only as reference because the owner had moved the demo to story mode in parallel. The next cut follows the rebuilt demo and its script.
 
 **Status:** paused at 14:08 pending the demo rebuild; nothing is scheduled.
+
+## 2026-10-31 — Put the agents' lines on Agent Relay for real
+
+**User direction:** "are agents really work at the background? did they communicate via agent relay?" (16:44).
+
+**Assistant choices and why:** told the owner plainly that the demo's agent lines were scripted and never touched Relay, then made the claim true at the transport level: the stage driver posts each line as its agent in `#pier9` on Agent Relay (via `relay/bus.ts`), threaded per deal, before mirroring it into the dock. The deals remain code-decided so the demo stays deterministic; the owner can say "the messages are posted and threaded by the agents on Agent Relay; the deals are bounded by code; the dock validates every settlement". Because the workspace rejects bursts and answers slowly (register ~10 s each, post ~4 s), the driver registers the cast sequentially at startup and queues posts with retries; nothing on stage waits for Relay. Live LLM wording of the lines was offered as a further step and not started.

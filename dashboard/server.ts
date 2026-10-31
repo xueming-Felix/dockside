@@ -7,7 +7,7 @@ import { actors } from "../actor/generated/index.js"
 import { ACTOR_ID } from "../shared/types.js"
 import { DemoDriver } from "./demo.js"
 
-for (const file of [join(import.meta.dir, ".env"), join(import.meta.dir, "../actor/.env")]) {
+for (const file of [join(import.meta.dir, ".env"), join(import.meta.dir, "../actor/.env"), join(import.meta.dir, "../relay/.env")]) {
   if (!existsSync(file)) continue
   for (const line of readFileSync(file, "utf8").split("\n")) {
     const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/)

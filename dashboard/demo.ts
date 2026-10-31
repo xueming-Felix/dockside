@@ -5,6 +5,8 @@
 import { actors } from "../actor/generated/index.js"
 import { PIER9 } from "../shared/pier9.js"
 import { ACTOR_ID, DETENTION_FREE_MIN, hhmm, type Auction, type Event, type Offer, type Snapshot, type Truck } from "../shared/types.js"
+import { RelayBus, type BusAgent } from "../relay/bus.js"
+const CAST = ["pier9-ops", "carrier-a", "carrier-b", "carrier-c", "carrier-d", "broker", "shipper", "carrier-x"]
 
 export type KeyStatus = "ready" | "running" | "done" | "failed"
 export type KeyState = { n: number; title: string; sim: string; simMin: number; status: KeyStatus; note?: string }
@@ -47,6 +49,12 @@ export class DemoDriver {
 
   readonly passive = !!process.env.DEMO_PASSIVE // Person B's dispatcher is driving: no chatter, no awards, no gate
   readonly mode: "story" | "keys" = process.env.DEMO_MODE === "keys" ? "keys" : "story"
+  // Agent Relay: every agent line is posted as that agent in #pier9 (one thread per deal) before the dock mirrors it.
+  readonly relayEnabled = !!process.env.RELAY_WORKSPACE_KEY && process.env.RELAY_POST !== "0"
+  private relayBus?: RelayBus
+  private relayAgents = new Map<string, Promise<BusAgent>>()
+  private relayRoots = new Map<string, string>()
+  private relayStats = { posted: 0, failed: 0, delivered: 0, lastError: "" }
   readonly storySpeed = Number(process.env.STORY_SPEED ?? 5) // story mode: 1 real second = 5 sim seconds, so scenes can be pressed at any rhythm
   private scenes: Scene[] = SCENES.map(sc => ({ ...sc, status: "ready" }))
   private story: Story | null = null
@@ -54,13 +62,72 @@ export class DemoDriver {
     this.dock = actors.Dock.get(actorId)
     void this.connect()
     if (!this.passive) setInterval(() => void this.tickLoop(), 1000)
+    if (this.relayEnabled) {
+      try {
+        this.relayBus = new RelayBus()
+        this.relayBus.onMessage(() => { this.relayStats.delivered += 1 })
+        // the workspace rejects bursts ("write capacity is busy"): register the cast one at a time, in the queue
+        for (const name of CAST) this.relayQueue(() => this.relayAgent(name).then(() => this.note(`relay: ${name} is in #pier9`)))
+      } catch (e) {
+        this.relayStats.lastError = e instanceof Error ? e.message : String(e)
+      }
+    }
+  }
+
+  /** Registration with backoff; one attempt chain per handle. */
+  private relayAgent(name: string): Promise<BusAgent> {
+    let p = this.relayAgents.get(name)
+    if (!p) {
+      p = (async () => {
+        let last: unknown
+        for (const wait of [0, 2000, 4000, 8000, 12000]) {
+          if (wait) await sleep(wait)
+          try { return await this.relayBus!.register(name) } catch (e) { last = e }
+        }
+        throw last
+      })()
+      this.relayAgents.set(name, p)
+      p.catch(e => { this.relayAgents.delete(name); this.relayStats.lastError = `register ${name}: ${e instanceof Error ? e.message : e}` })
+    }
+    return p
+  }
+
+  /** One FIFO for everything that touches Relay, so replies always follow their thread root and bursts never happen. */
+  private relayChain: Promise<void> = Promise.resolve()
+  private relayPending = 0
+  private relayQueue(job: () => Promise<unknown>): void {
+    this.relayPending += 1
+    this.relayChain = this.relayChain.then(job).catch(() => {}).then(() => { this.relayPending -= 1 })
   }
 
   state() {
-    return { actorId: this.actorId, speed: this.speed, auto: this.auto, running: this.running, passive: this.passive, mode: this.mode, scenes: this.scenes, story: this.story, simMin: this.simNow(), seeded: this.snap?.seeded ?? false, keys: this.keys, log: this.log.slice(-12) }
+    return { actorId: this.actorId, speed: this.speed, auto: this.auto, running: this.running, passive: this.passive, mode: this.mode, scenes: this.scenes, story: this.story, relay: { enabled: !!this.relayBus, agents: this.relayAgents.size, queued: this.relayPending, ...this.relayStats }, simMin: this.simNow(), seeded: this.snap?.seeded ?? false, keys: this.keys, log: this.log.slice(-12) }
   }
 
-  private say(from: string, to: string, text: string, thread?: string) { return this.dock.say(from, to, text, thread) }
+  /** Post the line in #pier9 on Agent Relay as `from` (reply inside the deal's thread), then mirror it into the dock. */
+  private async say(from: string, to: string, text: string, thread?: string) {
+    if (this.relayBus) {
+      // queued and retried; the scene never waits for Relay
+      this.relayQueue(async () => {
+        let last: unknown
+        for (const wait of [0, 1500, 3000, 6000]) {
+          if (wait) await sleep(wait)
+          try {
+            const agent = await this.relayAgent(from)
+            const root = thread ? this.relayRoots.get(thread) : undefined
+            const line = to !== "*" && !text.includes(`@${to}`) ? `@${to} ${text}` : text
+            const m = await agent.post(line, root ? { thread: root } : undefined)
+            if (thread && !root) this.relayRoots.set(thread, m.id)
+            this.relayStats.posted += 1
+            return
+          } catch (e) { last = e }
+        }
+        this.relayStats.failed += 1
+        this.relayStats.lastError = last instanceof Error ? last.message : String(last)
+      })
+    }
+    return this.dock.say(from, to, text, thread)
+  }
   private note(text: string) { this.log.push(`${hhmm(this.simNow())} ${text}`); if (this.log.length > 60) this.log = this.log.slice(-60); console.log(`[demo] ${text}`) }
   private simNow(): number {
     const s = this.snap
@@ -196,6 +263,7 @@ export class DemoDriver {
     this.snap = s
     this.lastSeq = s.events.at(-1)?.seq ?? 0
     this.running = null
+    this.relayRoots.clear()
     this.log = []
     this.note(`reset: Pier 9 at 08:00, ${this.mode === "story" ? this.storySpeed : this.speed}x${this.mode === "story" ? " (story mode)" : ""}`)
     return { ok: true }

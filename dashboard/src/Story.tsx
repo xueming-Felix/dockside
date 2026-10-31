@@ -54,12 +54,16 @@ export const SceneControls = memo(function SceneControls({ actorId, driver }: { 
   const elapsed = running ? Math.max(0, Math.round((Date.now() - runningSince.at) / 1000)) : 0
   const done = scenes.filter(s => s.status === "done").length
   const mismatch = state !== null && !!state.actorId && state.actorId !== actorId
+  const relay = state?.relay ?? null
+  const relayText = !relay ? "" : !relay.enabled ? " · Relay off"
+    : relay.agents < 8 ? ` · Relay: ${relay.agents}/8 agents joining #pier9`
+    : ` · Relay #pier9: ${relay.posted} posted${relay.queued ? `, ${relay.queued} on the way` : ""}${relay.failed ? `, ${relay.failed} failed` : ""}`
   const status = !online ? { cls: "offline", text: "driver offline · retrying" }
     : notice ? { cls: notice.kind, text: notice.text }
     : mismatch ? { cls: "error", text: `driver on ${state.actorId} · board on ${actorId}` }
     : !haveScenes ? { cls: "offline", text: "driver has no scenes yet" }
-    : running ? { cls: "running", text: `running scene ${running.n} · ${running.title}` }
-    : { cls: "", text: `${done}/${scenes.length} scenes done` }
+    : running ? { cls: "running", text: `running scene ${running.n} · ${running.title}${relayText}` }
+    : { cls: "", text: `${done}/${scenes.length} scenes done${relayText}` }
 
   return (
     <div className={`controls scenes ${online ? "" : "offline"}`} role="toolbar" aria-label="Scene controls">

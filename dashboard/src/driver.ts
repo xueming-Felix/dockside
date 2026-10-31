@@ -14,7 +14,9 @@ export type StageMode = "story" | "keys"
 export type DemoState = {
   actorId: string; auto: boolean; running: number | null; keys: DemoKey[]
   mode: StageMode; scenes: Scene[]; story: Story | null // a driver that predates scenes reads as mode "keys" with no scenes
+  relay: RelayStats | null // Agent Relay posting, when the driver has a workspace key
 }
+export type RelayStats = { enabled: boolean; agents: number; queued: number; posted: number; failed: number; delivered: number; lastError: string }
 export type Notice = { kind: "error" | "info"; text: string }
 export type Driver = {
   state: DemoState | null; online: boolean; pending: string[]; notice: Notice | null
@@ -38,6 +40,7 @@ function normalize(s: Partial<DemoState> | null): DemoState | null {
   return {
     actorId: typeof s.actorId === "string" ? s.actorId : "", auto: !!s.auto, running: typeof s.running === "number" ? s.running : null,
     keys: Array.isArray(s.keys) ? s.keys : [], mode: s.mode === "story" ? "story" : "keys", scenes: Array.isArray(s.scenes) ? s.scenes : [], story,
+    relay: s.relay && typeof s.relay === "object" ? s.relay : null,
   }
 }
 
