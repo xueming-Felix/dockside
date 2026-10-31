@@ -8,6 +8,8 @@ A warehouse's dock is a [Durable Actor](https://github.com/TerseAI/durable-actor
 - **[PLAN.md](PLAN.md)**: the execution plan, interface contract, personas, scenario and pitch.
 - **[docs/plan.html](docs/plan.html)**: the same plan as a page with the diagrams in place (open locally).
 
+![Person A owns the Dock actor on Terse and the dashboard; Person B owns the dispatcher, the persona agents and the scenario runner; shared/types.ts sits between them.](docs/diagrams/ownership.svg)
+
 ## Layout
 
 | Folder | Owner | What lives here |
