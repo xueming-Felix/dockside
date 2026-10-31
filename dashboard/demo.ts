@@ -7,6 +7,17 @@ import { PIER9 } from "../shared/pier9.js"
 import { ACTOR_ID, DETENTION_FREE_MIN, hhmm, type Auction, type Event, type Offer, type Snapshot, type Truck } from "../shared/types.js"
 import { RelayBus, type BusAgent } from "../relay/bus.js"
 const CAST = ["pier9-ops", "carrier-a", "carrier-b", "carrier-c", "carrier-d", "broker", "shipper", "carrier-x"]
+// PLAN.md's persona table, for the carrier tabs.
+export const CAST_INFO = [
+  { handle: "carrier-a", role: "Carrier A, the pusher", trucks: ["T1", "T4", "T13"], hourUsd: 120, budgetUsd: 150, rule: "Always wants the earliest slot; opens a SWAP with whoever holds it; never yields; bids on every auction." },
+  { handle: "carrier-b", role: "Carrier B, cooperative", trucks: ["T2", "T6", "T9", "T12", "T14"], hourUsd: 60, budgetUsd: 0, rule: "Accepts anything within two hours; when offered money to move, counters once for 20% more, then agrees." },
+  { handle: "carrier-c", role: "Carrier C, reefer", trucks: ["T5", "T10"], hourUsd: 200, budgetUsd: 250, rule: "Refuses any dry door; opens a SWAP for the earliest reefer slot and pays for it; mentions the cold chain every time." },
+  { handle: "carrier-d", role: "Carrier D, owner-operator", trucks: ["T8"], hourUsd: 90, budgetUsd: 0, rule: "Bids on auctions it can reach; if a slot ends after 15:30, declines and asks for tomorrow 08:00." },
+  { handle: "broker", role: "Broker", trucks: ["T3", "T7"], hourUsd: 100, budgetUsd: 0, rule: "Yields for a hot load only for a detention waiver and a later slot; vets carriers against its tender list; offers backhauls to empty trucks." },
+  { handle: "shipper", role: "Shipper", trucks: ["T11"], hourUsd: 300, budgetUsd: 300, rule: "Asks the thread who can yield, accepts the broker's package, posts the SETTLE, thanks everyone by name." },
+  { handle: "pier9-ops", role: "Pier 9 Cold Storage, the warehouse", trucks: [], hourUsd: 0, budgetUsd: 200, rule: "Approves claims and waivers under $200; refuses any carrier the broker won't vouch for; announces door changes and auctions." },
+  { handle: "carrier-x", role: "Unknown carrier", trucks: [], hourUsd: 0, budgetUsd: 0, rule: "Asks for door 2 at 11:00 for a load that is not theirs; argues once when refused, then goes quiet." },
+]
 
 export type KeyStatus = "ready" | "running" | "done" | "failed"
 export type KeyState = { n: number; title: string; sim: string; simMin: number; status: KeyStatus; note?: string }
@@ -58,6 +69,15 @@ export class DemoDriver {
   readonly storySpeed = Number(process.env.STORY_SPEED ?? 5) // story mode: 1 real second = 5 sim seconds, so scenes can be pressed at any rhythm
   private scenes: Scene[] = SCENES.map(sc => ({ ...sc, status: "ready" }))
   private story: Story | null = null
+  // Step-by-step: every step after the first waits for the presenter's Next (space / enter / arrow), unless STORY_MANUAL=0.
+  readonly manual = process.env.STORY_MANUAL !== "0"
+  readonly pace = Number(process.env.STORY_PACE_MS ?? 3000) // real ms between lines inside a step
+  private awaitingNext = false
+  private nextTitle = ""
+  private nextWaiter: (() => void) | null = null
+  private aborted = false
+  // What arrived over Agent Relay's event stream (not the dock mirror): the carrier tabs render this.
+  private relayFeed: { id: string; from: string; text: string; thread?: string; mentions: string[]; at: number }[] = []
   constructor(readonly actorId = ACTOR_ID, readonly speed = 60) {
     this.dock = actors.Dock.get(actorId)
     void this.connect()
@@ -65,7 +85,11 @@ export class DemoDriver {
     if (this.relayEnabled) {
       try {
         this.relayBus = new RelayBus()
-        this.relayBus.onMessage(() => { this.relayStats.delivered += 1 })
+        this.relayBus.onMessage(m => {
+          this.relayStats.delivered += 1
+          this.relayFeed.push({ id: m.id, from: m.from, text: m.text, thread: m.thread, mentions: m.mentions, at: Date.now() })
+          if (this.relayFeed.length > 400) this.relayFeed = this.relayFeed.slice(-400)
+        })
         // the workspace rejects bursts ("write capacity is busy"): register the cast one at a time, in the queue
         for (const name of CAST) this.relayQueue(() => this.relayAgent(name).then(() => this.note(`relay: ${name} is in #pier9`)))
       } catch (e) {
@@ -101,7 +125,7 @@ export class DemoDriver {
   }
 
   state() {
-    return { actorId: this.actorId, speed: this.speed, auto: this.auto, running: this.running, passive: this.passive, mode: this.mode, scenes: this.scenes, story: this.story, relay: { enabled: !!this.relayBus, agents: this.relayAgents.size, queued: this.relayPending, ...this.relayStats }, simMin: this.simNow(), seeded: this.snap?.seeded ?? false, keys: this.keys, log: this.log.slice(-12) }
+    return { actorId: this.actorId, speed: this.speed, auto: this.auto, running: this.running, passive: this.passive, mode: this.mode, scenes: this.scenes, story: this.story, manual: this.manual, awaitingNext: this.awaitingNext, nextTitle: this.nextTitle, cast: CAST_INFO, relayFeed: this.relayFeed.slice(-200), relay: { enabled: !!this.relayBus, agents: this.relayAgents.size, queued: this.relayPending, ...this.relayStats }, simMin: this.simNow(), seeded: this.snap?.seeded ?? false, keys: this.keys, log: this.log.slice(-12) }
   }
 
   /** Post the line in #pier9 on Agent Relay as `from` (reply inside the deal's thread), then mirror it into the dock. */
@@ -257,6 +281,10 @@ export class DemoDriver {
     this.keys = KEYS.map(k => ({ ...k, status: "ready" }))
     this.scenes = SCENES.map(sc => ({ ...sc, status: "ready" }))
     this.story = null
+    this.aborted = true
+    this.nextWaiter?.()
+    this.awaitingNext = false
+    this.relayFeed = []
     const s = this.mode === "story"
       ? await this.dock.seed({ ...PIER9, speed: this.storySpeed, arrivalChecks: "flagged" })
       : await this.dock.seed({ ...PIER9, speed: this.speed })
@@ -304,6 +332,7 @@ export class DemoDriver {
     if (!this.snap?.seeded) return { ok: false, reason: "press Reset first: the dock is not seeded" }
     if (this.passive) return { ok: false, reason: "passive mode" }
     this.running = scene.n
+    this.aborted = false
     scene.status = "running"
     scene.note = undefined
     scene.outcome = undefined
@@ -324,140 +353,181 @@ export class DemoDriver {
   private sceneSteps(id: string): StepSpec[] {
     switch (id) {
       case "collision": return [
-        { tech: "actor", title: "Two requests for door 4 at 14:00, in the same instant", what: "carrier-b asks for T14, carrier-a asks for T13: both want door 4 at two o'clock.", why: "The dock is a Durable Actor: one request at a time. T14 books, T13 gets an offer for 15:00. No lock, no race, no double booking." },
-        { tech: "agents", title: "The loser goes straight to the winner with cash", what: "carrier-a's agent opens a thread with carrier-b: swap the two slots for $120.", why: "Agents negotiate with each other on Agent Relay. The dock is not in the conversation; it only listens." },
-        { tech: "agents", title: "Two rounds: counter, then agree", what: "carrier-b counters at $150. carrier-a agrees.", why: "Multi-round bargaining with limits in code: budgets are checked before the model answers, two messages per agent per thread, and a deadline timer in the actor if they stall." },
-        { tech: "dispatcher", title: "SETTLE: the dock swaps the slots atomically", what: "carrier-a posts the settlement. The dispatcher calls swap(T13, T14), then pay(). Both blocks trade places on the board.", why: "The actor validates every settlement in order. If two agents settle conflicting deals in the same second, one lands and the other comes back REJECTED." },
+        { tech: "actor", title: "carrier-b asks for door 4 at 14:00", what: "A normal booking: request(carrier-b, T14, door 4, 14:00). The dock answers in one call.", why: "The dock is the single source of truth for every door. No spreadsheet, no phone." },
+        { tech: "actor", title: "carrier-a asks for the same slot, in the same instant", what: "request(carrier-a, T13, door 4, 14:00). The dock sees the collision: 14:00 is taken, so T13 is offered 15:00 instead of an error.", why: "The dock is a Durable Actor: one request at a time. Two simultaneous requests can never double-book; the second gets the next slot and an offer." },
+        { tech: "dispatcher", title: "The dock announces the offer in #pier9", what: "OFFER → carrier-a: T13 door 4 15:00 — 14:00 is held by carrier-b (T14). A thread opens for the deal.", why: "The offer names who holds the slot the loser wants, which is exactly what a human dispatcher would have to look up and phone around for." },
+        { tech: "agents", title: "The loser goes straight to the winner with cash", what: "carrier-a's agent replies in the thread: swap the two slots for $120.", why: "Agents negotiate with each other on Agent Relay. The dock is not in the conversation; it only listens." },
+        { tech: "agents", title: "Counter, then agree", what: "carrier-b counters at $150. carrier-a agrees.", why: "Multi-round bargaining with limits in code: budgets are checked before the model answers, two messages per agent per thread, a deadline timer in the actor if they stall." },
+        { tech: "dispatcher", title: "SETTLE: the dock swaps the slots atomically", what: "carrier-a posts the settlement. The dispatcher calls swap(T13, T14), then pay(). Both blocks trade places on the board.", why: "The actor validates every settlement in order. If two agents settled conflicting deals in the same second, one would land and the other come back REJECTED." },
       ]
       case "doordown": return [
-        { tech: "actor", title: "Door 5 fails; the dock re-plans in one call", what: "setDoor(5, out of service). The reefer truck on it, carrier-c's T5, is the only truck that moves: to door 6 at 11:00.", why: "State and planning live in the actor. Unaffected trucks keep their slots. One offer goes out, to carrier-c, naming who holds the slot it would rather have." },
-        { tech: "agents", title: "carrier-c wants 10:00 back: the cold chain is worth money", what: "Its agent offers carrier-b $150 to take 11:00 instead.", why: "The offer told the agent exactly who to talk to. No broker, no dispatcher, no phone call." },
+        { tech: "actor", title: "Door 5 fails; the dock re-plans in one call", what: "setDoor(5, out of service). The reefer truck on it, carrier-c's T5, is the only truck that moves: to door 6 at 11:00.", why: "State and planning live in the actor. Unaffected trucks keep their slots; there is no cascade to clean up." },
+        { tech: "dispatcher", title: "The dock offers carrier-c the new slot and names who holds 10:00", what: "OFFER → carrier-c: T5 door 6 11:00. Holder of door 6 10:00: carrier-b (T9).", why: "The offer carries the one fact the carrier needs to act: who to talk to." },
+        { tech: "agents", title: "carrier-c wants 10:00 back and offers carrier-b $150", what: "A reefer hour is worth about $200 to carrier-c (cold chain). carrier-b values an hour at $60.", why: "There is a deal to be found between those two numbers, and no human has to find it." },
         { tech: "agents", title: "Round two: $200, agreed", what: "carrier-b counters at $200. carrier-c agrees. Two rounds, then silence.", why: "Hard caps keep language-model agents from talking forever: two messages each, and the actor's deadline timer decides if they stall." },
-        { tech: "actor", title: "SETTLE: the dock pins T5 to 10:00 and bumps T9", what: "counter(offer, door 6, 10:00) succeeds because no higher-priority truck would move. T9 gets 11:00 and its own offer. $200 recorded.", why: "The actor checks door type and priority before accepting. A deal that breaks the rules comes back REJECTED with the reason." },
+        { tech: "actor", title: "SETTLE: the dock pins T5 to 10:00 and bumps T9", what: "counter(offer, door 6, 10:00) succeeds because no higher-priority truck would move. T9 gets 11:00 and its own offer. $200 recorded as a side payment.", why: "Both carriers are better off: carrier-c pays $200 for an hour it values at $200 or more, carrier-b earns $200 for an hour it values at $60. The warehouse paid nothing, and T5 waits one hour less." },
       ]
       case "auction": return [
         { tech: "actor", title: "Two of carrier-a's trucks report 90 minutes late", what: "reportEta(T1, 10:30) and reportEta(T4, 11:30). The dock re-plans only those two. Door 2 at 09:00 is suddenly free.", why: "Every ETA change is a re-plan inside the actor; the freed hour becomes something to sell." },
         { tech: "dispatcher", title: "The freed slot goes to auction, closing in one sim minute", what: "AUCTION on door 2 09:00. Any carrier may bid once: BID <truck> ready <time>.", why: "The close is a timer inside the actor, not a cron job somewhere else." },
         { tech: "agents", title: "Three carriers answer: two bid, one passes", what: "carrier-b bids T6 ready 08:50. carrier-d bids T8 ready 09:10. carrier-c passes: reefer loads only.", why: "One bid per carrier, enforced in code. The agents decide whether the slot is worth it to them." },
         { tech: "alarm", title: "The actor wakes itself and closes the auction", what: "Nobody presses anything. The auction_close alarm fires inside the actor and the auction closes.", why: "Durable alarm: it fires even if nobody is connected. A test actor left alone this afternoon woke itself five times on schedule." },
-        { tech: "actor", title: "Award: earliest ready wins", what: "award(T6): T6 jumps from noon to 09:00. Detention avoided +$225.", why: "The actor records the award atomically; the counter shows the money the carrier will never pay." },
+        { tech: "actor", title: "Award: earliest ready wins", what: "award(T6): T6 jumps from noon to 09:00. Detention avoided +$225 for the warehouse.", why: "The actor records the award atomically; the counter shows the detention the warehouse will never have to pay." },
       ]
       default: return []
     }
   }
 
-  private step(i: number): StoryStep { const st = this.story!.steps[i - 1]; st.status = "active"; st.at = hhmm(this.simNow()); return st }
-  private finish(st: StoryStep, lines: string[]) { st.lines = lines; st.status = "done"; st.at = hhmm(this.simNow()) }
+  /** The presenter's Next: releases the step that is waiting. */
+  next(): { ok: boolean; reason?: string } {
+    if (!this.awaitingNext || !this.nextWaiter) return { ok: false, reason: "no step is waiting" }
+    const release = this.nextWaiter
+    this.nextWaiter = null
+    this.awaitingNext = false
+    release()
+    return { ok: true }
+  }
+
+  private async step(i: number): Promise<StoryStep> {
+    const story = this.story!
+    const st = story.steps[i - 1]
+    if (this.manual && i > 1) {
+      this.nextTitle = st.title
+      this.awaitingNext = true
+      await new Promise<void>(resolve => { this.nextWaiter = resolve })
+      if (this.aborted || this.story !== story) throw new Error("reset")
+    }
+    st.status = "active"
+    st.at = hhmm(this.simNow())
+    return st
+  }
+  private line(st: StoryStep, text: string) { st.lines = [...(st.lines ?? []), text] }
+  private finish(st: StoryStep) { st.status = "done"; st.at = hhmm(this.simNow()) }
 
   private async scene(id: string): Promise<string | void> {
     const dock = this.dock
     const say = this.say.bind(this)
-    const chat = async (from: string, to: string, text: string, thread?: string) => { await say(from, to, text, thread); return `${from} → ${to}: ${text}` }
-    const pace = () => sleep(1500)
+    const chat = async (st: StoryStep, from: string, to: string, text: string, thread?: string) => { await say(from, to, text, thread); this.line(st, `${from} → ${to}: ${text}`) }
+    const pace = () => sleep(this.pace)
     if (id === "collision") {
-      let st = this.step(1)
+      let st = await this.step(1)
       const r1 = await dock.request("carrier-b", "T14", 4, 360)
+      this.line(st, r1.appt ? "dock → carrier-b: T14 booked door 4 14:00" : `dock → carrier-b: ${r1.reason}`)
+      this.finish(st)
+      st = await this.step(2)
       const r2 = await dock.request("carrier-a", "T13", 4, 360)
       const offer = r2.offer ?? this.must(this.openOffer(await dock.snapshot(), "T13"), "an offer for T13")
+      this.line(st, "dock: collision — door 4 14:00 is held by T14 (carrier-b)")
+      await pace()
+      this.line(st, `dock → carrier-a: OFFER ${offer.id} T13 door 4 15:00 instead`)
+      this.finish(st)
+      st = await this.step(3)
       await dock.openThread("th1", offer.id, this.simNow() + 30)
-      this.finish(st, [`dock → carrier-b: T14 booked door 4 14:00`, `dock → carrier-a: OFFER ${offer.id} T13 door 4 15:00 — 14:00 is held by T14 (carrier-b)`])
-      await say("pier9-ops", "*", `OFFER ${offer.id} → carrier-a: T13 door 4 15:00 — 14:00 is held by carrier-b (T14).`, "th1")
+      await chat(st, "pier9-ops", "*", `OFFER ${offer.id} → carrier-a: T13 door 4 15:00 — 14:00 is held by carrier-b (T14).`, "th1")
+      this.finish(st)
+      st = await this.step(4)
+      await chat(st, "carrier-a", "carrier-b", "SWAP? @carrier-b — T13 takes door 4 14:00, T14 takes 15:00, we pay $120.", "th1")
+      this.finish(st)
+      st = await this.step(5)
+      await chat(st, "carrier-b", "carrier-a", "COUNTER $150 — 15:00 costs us a driver swap.", "th1")
       await pace()
-      st = this.step(2)
-      const l2 = await chat("carrier-a", "carrier-b", "SWAP? @carrier-b — T13 takes door 4 14:00, T14 takes 15:00, we pay $120.", "th1")
-      this.finish(st, [l2])
+      await chat(st, "carrier-a", "carrier-b", "AGREE $150.", "th1")
+      this.finish(st)
+      st = await this.step(6)
+      await chat(st, "carrier-a", "pier9-ops", "SETTLE th1: T13 door 4 14:00 · T14 door 4 15:00 · pay carrier-a→carrier-b $150", "th1")
       await pace()
-      st = this.step(3)
-      const l3a = await chat("carrier-b", "carrier-a", "COUNTER $150 — 15:00 costs us a driver swap.", "th1")
-      await pace()
-      const l3b = await chat("carrier-a", "carrier-b", "AGREE $150.", "th1")
-      this.finish(st, [l3a, l3b])
-      await pace()
-      st = this.step(4)
-      const l4 = await chat("carrier-a", "pier9-ops", "SETTLE th1: T13 door 4 14:00 · T14 door 4 15:00 · pay carrier-a→carrier-b $150", "th1")
       const sw = await dock.swap("T13", "T14")
       if (!sw.ok) throw new Error(`swap refused: ${sw.reason}`)
+      this.line(st, "dock: swap(T13, T14) ok — T13 now 14:00, T14 15:00")
       await dock.pay("carrier-a", "carrier-b", 150)
       await dock.settleThread("th1")
-      this.finish(st, [l4, "dock: swap(T13, T14) ok — T13 now 14:00, T14 15:00", "dock: pay carrier-a → carrier-b $150"])
+      this.line(st, "dock: pay carrier-a → carrier-b $150; thread settled")
+      this.finish(st)
       const s = await dock.snapshot()
-      return `T13 at 14:00, T14 at 15:00, $${s.counters.sidePaymentsUsd} changed hands, the dock never double-booked, nobody picked up a phone.`
+      return `T13 at 14:00, T14 at 15:00, $${s.counters.sidePaymentsUsd} changed hands between the carriers, the dock never double-booked, nobody picked up a phone.`
     }
     if (id === "doordown") {
-      let st = this.step(1)
+      let st = await this.step(1)
       const sd = await dock.setDoor(5, false)
       const o5 = sd.offers.find(o => o.truckId === "T5") ?? this.openOffer(await dock.snapshot(), "T5")
       if (!o5) throw new Error("door 5 down displaced nobody; is T5 still on door 5?")
       const holder = (await dock.snapshot()).appts.find(a => a.door === 6 && a.startMin === 120 && a.truckId !== "T5")
+      this.line(st, "dock: door 5 out of service")
+      await pace()
+      this.line(st, `dock: re-plan — T5 (reefer, carrier-c) moves to door ${o5.door} ${hhmm(o5.startMin)}; nothing else moves`)
+      this.finish(st)
+      st = await this.step(2)
       await dock.openThread("th-cold", o5.id, this.simNow() + 30)
-      this.finish(st, ["dock: door 5 out of service", `dock → carrier-c: OFFER ${o5.id} T5 door ${o5.door} ${hhmm(o5.startMin)} (was door 5 10:00). Holder of door 6 10:00: carrier-b (${holder?.truckId ?? "T9"})`])
-      await say("pier9-ops", "*", `Door 5 is out of service. OFFER ${o5.id} → carrier-c: T5 door 6 ${hhmm(o5.startMin)}. Holder of door 6 10:00: @carrier-b (${holder?.truckId ?? "T9"}).`, "th-cold")
+      await chat(st, "pier9-ops", "*", `Door 5 is out of service. OFFER ${o5.id} → carrier-c: T5 door 6 ${hhmm(o5.startMin)}. Holder of door 6 10:00: @carrier-b (${holder?.truckId ?? "T9"}).`, "th-cold")
+      this.finish(st)
+      st = await this.step(3)
+      await chat(st, "carrier-c", "carrier-b", "SWAP? @carrier-b — T5 takes door 6 10:00, T9 takes 11:00, we cover $150 of your detention. Cold chain.", "th-cold")
+      this.finish(st)
+      st = await this.step(4)
+      await chat(st, "carrier-b", "carrier-c", "COUNTER $200 — 11:00 pushes our next pickup.", "th-cold")
       await pace()
-      st = this.step(2)
-      const l2 = await chat("carrier-c", "carrier-b", "SWAP? @carrier-b — T5 takes door 6 10:00, T9 takes 11:00, we cover $150 of your detention. Cold chain.", "th-cold")
-      this.finish(st, [l2])
+      await chat(st, "carrier-c", "carrier-b", "AGREE $200 — the cold chain is worth it.", "th-cold")
+      this.finish(st)
+      st = await this.step(5)
+      await chat(st, "carrier-c", "pier9-ops", `SETTLE th-cold: T5 door 6 10:00 · ${holder?.truckId ?? "T9"} door 6 11:00 · pay carrier-c→carrier-b $200`, "th-cold")
       await pace()
-      st = this.step(3)
-      const l3a = await chat("carrier-b", "carrier-c", "COUNTER $200 — 11:00 pushes our next pickup.", "th-cold")
-      await pace()
-      const l3b = await chat("carrier-c", "carrier-b", "AGREE $200 — the cold chain is worth it.", "th-cold")
-      this.finish(st, [l3a, l3b])
-      await pace()
-      st = this.step(4)
-      const l4 = await chat("carrier-c", "pier9-ops", `SETTLE th-cold: T5 door 6 10:00 · ${holder?.truckId ?? "T9"} door 6 11:00 · pay carrier-c→carrier-b $200`, "th-cold")
       const ct = await dock.counter(o5.id, 6, 120)
       if (!ct.ok) throw new Error(`counter refused: ${ct.reason}`)
       for (const o of ct.offers) await dock.accept(o.id)
+      this.line(st, `dock: counter ok — T5 pinned to door 6 10:00, ${holder?.truckId ?? "T9"} moved to 11:00`)
       await dock.pay("carrier-c", "carrier-b", 200)
       await dock.settleThread("th-cold")
-      this.finish(st, [l4, "dock: counter ok — T5 pinned to door 6 10:00, T9 moved to 11:00", "dock: pay carrier-c → carrier-b $200"])
+      this.line(st, "dock: pay carrier-c → carrier-b $200; thread settled")
+      this.finish(st)
       const s = await dock.snapshot()
-      return `T5 unloads cold at 10:00 on door 6, T9 moved an hour for $200, side payments now $${s.counters.sidePaymentsUsd}.`
+      return `T5 unloads cold at 10:00 on door 6; carrier-b took $200 to wait an hour it values at $60; the warehouse paid nothing. Side payments between carriers now $${s.counters.sidePaymentsUsd}; detention avoided (warehouse) $${s.counters.detentionAvoidedUsd}.`
     }
     if (id === "auction") {
-      let st = this.step(1)
+      let st = await this.step(1)
       const now = this.simNow()
+      await say("carrier-a", "pier9-ops", "T1 and T4 are stuck on the bridge; both 90 minutes out.")
+      this.line(st, "carrier-a → pier9-ops: T1 and T4 are stuck on the bridge; both 90 minutes out.")
+      await pace()
       const e1 = await dock.reportEta("T1", Math.max(150, now + 90))
       const e2 = await dock.reportEta("T4", Math.max(210, now + 90))
       for (const o of [...e1.offers, ...e2.offers]) await dock.accept(o.id)
-      const moved = [...e1.offers, ...e2.offers].map(o => `${o.truckId} → door ${o.door} ${hhmm(o.startMin)}`)
-      this.finish(st, [`carrier-a → dock: T1 and T4 are 90 minutes out`, ...moved.map(m => `dock: ${m}`), "dock: door 2 09:00 is free"])
-      await say("carrier-a", "pier9-ops", "T1 and T4 are stuck on the bridge; both 90 minutes out.")
-      await pace()
-      st = this.step(2)
+      for (const o of [...e1.offers, ...e2.offers]) this.line(st, `dock: ${o.truckId} → door ${o.door} ${hhmm(o.startMin)}`)
+      this.line(st, "dock: door 2 09:00 is free")
+      this.finish(st)
+      st = await this.step(2)
       const closes = this.simNow() + 1
       const a1 = this.must((await dock.openAuction(2, 60, closes, "T1 stuck in traffic")).auction, "auction")
-      const l2 = await chat("pier9-ops", "*", `AUCTION ${a1.id} door 2 09:00 — slot freed by T1's delay. Closes ${hhmm(closes)}. BID ${a1.id} <truck> ready <HH:MM>`)
-      this.finish(st, [l2])
-      await pace()
-      st = this.step(3)
-      const l3a = await chat("carrier-b", "pier9-ops", `BID ${a1.id} T6 ready 08:50`)
+      await chat(st, "pier9-ops", "*", `AUCTION ${a1.id} door 2 09:00 — slot freed by T1's delay. Closes ${hhmm(closes)}. BID ${a1.id} <truck> ready <HH:MM>`)
+      this.finish(st)
+      st = await this.step(3)
+      await chat(st, "carrier-b", "pier9-ops", `BID ${a1.id} T6 ready 08:50`)
       await dock.bid(a1.id, "T6", 50)
       await pace()
-      const l3b = await chat("carrier-d", "pier9-ops", `BID ${a1.id} T8 ready 09:10`)
+      await chat(st, "carrier-d", "pier9-ops", `BID ${a1.id} T8 ready 09:10`)
       await dock.bid(a1.id, "T8", 70)
       await pace()
-      const l3c = await chat("carrier-c", "pier9-ops", "PASS — reefer loads only, that is a dry door.")
-      this.finish(st, [l3a, l3b, l3c])
-      st = this.step(4)
+      await chat(st, "carrier-c", "pier9-ops", "PASS — reefer loads only, that is a dry door.")
+      this.finish(st)
+      st = await this.step(4)
       const started = Date.now()
       let closed = false
-      while (Date.now() - started < 60_000) {
+      while (Date.now() - started < 90_000) {
         const s = await dock.snapshot()
         const au = s.auctions.find(a => a.id === a1.id)
         if (au && au.status !== "open") { closed = true; break }
         await sleep(500)
       }
-      if (!closed) throw new Error("the auction_close alarm did not fire within 60 s")
-      this.finish(st, [`alarm → auction_closed ${a1.id} at ${hhmm(this.simNow())}: 2 bids, nobody connected had to do anything`])
-      await pace()
-      st = this.step(5)
+      if (!closed) throw new Error("the auction_close alarm did not fire within 90 s")
+      this.line(st, `alarm → auction_closed ${a1.id} at ${hhmm(this.simNow())}: 2 bids, nobody connected had to do anything`)
+      this.finish(st)
+      st = await this.step(5)
       const aw = await dock.award(a1.id, "T6")
       if (!aw.ok) throw new Error(`award refused: ${aw.reason}`)
-      const l5 = await chat("pier9-ops", "*", `${a1.id} closed by the clock. Door 2 09:00 goes to T6 (ready 08:50).`)
+      await chat(st, "pier9-ops", "*", `${a1.id} closed by the clock. Door 2 09:00 goes to T6 (ready 08:50).`)
       const s = await dock.snapshot()
-      this.finish(st, [l5, `dock: award(${a1.id}, T6) ok — detention avoided now $${s.counters.detentionAvoidedUsd}`])
-      return `T6 unloads at 09:00 instead of noon, the clock did the closing, detention avoided $${s.counters.detentionAvoidedUsd}.`
+      this.line(st, `dock: award(${a1.id}, T6) ok — detention avoided (warehouse) now $${s.counters.detentionAvoidedUsd}`)
+      this.finish(st)
+      return `T6 unloads at 09:00 instead of noon, the clock did the closing, detention avoided (warehouse) $${s.counters.detentionAvoidedUsd}.`
     }
     throw new Error(`no scene ${id}`)
   }

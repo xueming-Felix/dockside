@@ -33,9 +33,11 @@ export const SceneControls = memo(function SceneControls({ actorId, driver }: { 
     if (!locked && s) void post(`scene:${s.id}`, `/api/demo/scene/${encodeURIComponent(s.id)}`, `scene ${s.n}`)
   }
   const reset = () => { if (online) void post("reset", "/api/demo/reset", "reset") }
+  const awaiting = !!state?.awaitingNext
+  const nextStep = () => { if (online && awaiting && !pending.includes("next")) void post("next", "/api/demo/next", "next step") }
 
-  const handlers = useRef({ start, reset })
-  useEffect(() => { handlers.current = { start, reset } })
+  const handlers = useRef({ start, reset, nextStep })
+  useEffect(() => { handlers.current = { start, reset, nextStep } })
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return // Cmd+R must still reload the page
@@ -44,6 +46,7 @@ export const SceneControls = memo(function SceneControls({ actorId, driver }: { 
       const h = handlers.current
       if (/^[1-3]$/.test(e.key)) h.start(Number(e.key))
       else if (e.key === "r" || e.key === "R") h.reset()
+      else if (e.key === " " || e.key === "Enter" || e.key === "ArrowRight" || e.key === "n" || e.key === "N") h.nextStep()
       else return
       e.preventDefault()
     }
@@ -83,6 +86,14 @@ export const SceneControls = memo(function SceneControls({ actorId, driver }: { 
           </div>
         )
       })}
+      <div className={`ctl nextstep ${awaiting ? "waiting" : ""} ${pending.includes("next") ? "pending" : ""}`}>
+        <button type="button" onClick={nextStep} disabled={!online || !awaiting || pending.includes("next")} title="Run the next step of the scene (space, enter or →)" aria-label="Next step">
+          <span className="n">▶</span>
+          <span className="txt"><span className="t">{awaiting ? "Next step" : running ? "Step running…" : "Next step"}</span><span className="s">{awaiting ? state?.nextTitle : running ? "watch the panel" : "press a scene first"}</span></span>
+          <kbd>␣</kbd>
+        </button>
+        <small className="note">{awaiting ? "waiting for you" : ""}</small>
+      </div>
       <div className={`ctl reset ${pending.includes("reset") ? "pending" : ""}`}>
         <button type="button" onClick={reset} disabled={!online || pending.includes("reset")} title="Reseed the dock at 08:00 and set every scene back to ready (R)">
           <span className="n">↺</span>

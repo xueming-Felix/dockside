@@ -91,7 +91,7 @@ function Counters({ snap }: { snap: Snapshot }) {
   const c = snap.counters
   const usd = (n: number) => `$${Math.round(n).toLocaleString()}`
   const tiles: [string, string][] = [
-    ["detention avoided", usd(c.detentionAvoidedUsd)], ["side payments", usd(c.sidePaymentsUsd)],
+    ["detention avoided · warehouse", usd(c.detentionAvoidedUsd)], ["side payments · carrier to carrier", usd(c.sidePaymentsUsd)],
     ["phone calls", String(c.phoneCalls)], ["moves", String(c.moves)], ["backhauls", String(c.backhauls)],
   ]
   return <div className="counters">{tiles.map(([k, v]) => <div key={k} className="tile"><b>{v}</b><span>{k}</span></div>)}</div>

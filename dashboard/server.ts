@@ -37,6 +37,7 @@ Bun.serve({
     if (url.pathname === "/api/demo/state") return Response.json(demo.state(), { headers: { "Cache-Control": "no-store" } })
     if (req.method === "POST" && url.pathname === "/api/demo/reset") return Response.json(await demo.reset())
     if (req.method === "POST" && url.pathname === "/api/demo/auto") return Response.json(demo.toggleAuto())
+    if (req.method === "POST" && url.pathname === "/api/demo/next") return Response.json(demo.next())
     const scene = url.pathname.match(/^\/api\/demo\/scene\/([a-z]+)$/)
     if (req.method === "POST" && scene) return Response.json(demo.startScene(scene[1]))
     const key = url.pathname.match(/^\/api\/demo\/key\/(\d+)$/)
