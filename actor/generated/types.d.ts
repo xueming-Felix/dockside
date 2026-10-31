@@ -25,7 +25,7 @@ interface $DockContract {
         accept(offerId: string): Promise<OkResult>
         arrive(truckId: string): Promise<OkResult>
         award(auctionId: string, truckId: string): Promise<AuctionResult>
-        backhaul(truckId: string, by: string): Promise<OkResult>
+        backhaul(truckId: string, by?: string): Promise<OkResult>
         bid(auctionId: string, truckId: string, readyMin: number): Promise<AuctionResult>
         counter(offerId: string, door: number, startMin: number): Promise<CounterResult>
         decline(offerId: string): Promise<OffersResult>
@@ -112,6 +112,8 @@ type Clock = {
     speed: number
     frozenAtMin: number | null
     seeded: boolean
+    arrivalChecks?: "all" | "flagged"
+    flagged?: string[]
 }
 type CounterResult = {
     ok: boolean
@@ -172,6 +174,7 @@ type EventKind =
     | "clock"
     | "eta"
     | "backhaul"
+    | "thread_open"
 type Incoming = {
     type: "ping"
 }
@@ -213,7 +216,11 @@ type Scenario = {
         truckId: string
         door: number
         startMin: number
+        arrivalCheck?: boolean
+        status?: string
+        durationMin?: number
     }[]
+    arrivalChecks?: "all" | "flagged"
     startMin?: number
     speed?: number
 }
