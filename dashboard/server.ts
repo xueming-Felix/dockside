@@ -19,7 +19,7 @@ const dist = join(import.meta.dir, "dist")
 
 Bun.serve({
   port,
-  hostname: "127.0.0.1",
+  hostname: process.env.HOST ?? "127.0.0.1",
   async fetch(req) {
     const url = new URL(req.url)
     if (url.pathname === "/api/socket" && req.method === "POST") {
@@ -40,4 +40,4 @@ Bun.serve({
     return new Response("Dockside grant server. Run `bun run dev` for the page, or `bun run build` to serve it from here.", { status: 404 })
   },
 })
-console.log(`Dockside grant server on http://127.0.0.1:${port}  actor=${ACTOR_ID}  target=${process.env.TERSE_ACTOR_URL ?? "local runtime :7100"}`)
+console.log(`Dockside grant server on http://${process.env.HOST ?? "127.0.0.1"}:${port}  actor=${ACTOR_ID}  target=${process.env.TERSE_ACTOR_URL ?? "local runtime :7100"}`)

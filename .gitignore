@@ -6,4 +6,5 @@
 .terse
 dist/
 generated/
+!actor/generated/
 node_modules/
