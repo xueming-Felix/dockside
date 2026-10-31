@@ -14,8 +14,22 @@ At initialization the repository contains the plan, README and diagrams only; th
 
 ## Workspace status
 
-Project `dockside` is registered at `/Users/xuemingxu/workspace/projects/dockside`, linked to the existing private repository, with Lark topic group **Dockside** (`oc_7ace179430b101be62241f34b1b98de1`). Lark readback confirmed topic mode, the owner as member and the Codex bot (Felix) present; its Workspace binding and Botmux working-directory binding point new topics in that group at this folder. Felix-Claude (the Claude Code bot) is not in the group yet because Lark does not let one app add another bot: the owner adds "Felix-Claude" in the group's Bots settings, then runs `node scripts/add-bot.mjs cli_aa52cde0b578c08b claude-code` from the platform folder to mirror the binding. [Setup receipt](journal/2026-10/cap_9dd3bc10-281b-4e9e-9120-bfba30878d18.md).
+Project `dockside` is registered at `/Users/xuemingxu/workspace/projects/dockside`, linked to the existing private repository, with Lark topic group **Dockside** (`oc_7ace179430b101be62241f34b1b98de1`). Lark readback confirmed topic mode, the owner as member and the Codex bot (Felix) present. [Setup receipt](journal/2026-10/cap_9dd3bc10-281b-4e9e-9120-bfba30878d18.md).
+
+Felix-Claude is now also confirmed in the group. After the owner reported its pre-submit rejection, its missing bot-specific Workspace group binding and Botmux working-directory mapping were added on 2026-10-31. Both bots now map this group to `dockside` and this checkout. Configuration readback passed; the next human message to Felix-Claude remains the end-to-end inbound check. The blocked message was not replayed. [Request](journal/2026-10/cap_93307716-7b05-4e24-b628-c96d1702a4a7.md), [repair receipt](journal/2026-10/cap_e7d00598-a9dc-4073-8e2f-06d29a87e34b.md).
+
+## Build status (Person A, Felix-Claude)
+
+On 2026-10-31 at 11:40 the owner asked Felix-Claude to start Person A's implementation and keep going, reporting blockers, plus a temporary status page. [Request](journal/2026-10/cap_62aea7a3-1d4e-4aeb-9cc8-ef740d62821f.md). By 12:30:
+
+- `shared/types.ts` (contract, with marked additions) and `shared/pier9.ts` (default seed) exist.
+- `actor/` holds the `Dock` actor (`src/actors.ts`), the pure state machine (`src/model.ts`), 19 passing tests and `scripts/drive.ts`. It compiles and runs on the local Terse runtime; the drive script exercised collision, swap, pay, arrive, eta, door-down and counter correctly. Actor id `pier9-2026-10-31` (Terse rejects the plan's colon).
+- `dashboard/` holds the Vite + React board (Gantt, chatter feed, clock with next timers, counters, replay slider) and the Bun grant server; written, browser check pending.
+- Terse login and API token are in place on the Mac mini (`actor/.env`, git-ignored). Deploy was in progress when this was written; `TERSE_ACTOR_URL` goes to Person B afterwards.
+- Status page for the owner: https://claude.ai/artifact/GLxbt3J88EXQu4e2FXrnCg (private artifact, republished at milestones).
+
+See the 2026-10-31 "Person A implementation" entry in [decisions.md](decisions.md) for the contract additions, the door-5 reconciliation and the runtime constraints.
 
 ## Open items
 
-The request did not say what the workspace agents should do during the hackathon; no task, schedule or spending was created. Credentials named in the plan (Terse API token, Agent Relay workspace key, OpenAI key) belong in ignored `.env` files, never in Git.
+Person B's side (`relay/`) has not started in this repository; it needs the Agent Relay workspace key, the OpenAI key and a Devpost team. Person B should read the `[added]` marks in `shared/types.ts` and use `setDoor(5, false)` for the door-down beat. Credentials stay in ignored `.env` files, never in Git. The owner should rotate the Terse API token after the hackathon because it was pasted in chat.

@@ -1,6 +1,9 @@
+!.env.example
+.DS_Store
+.durable-actors
 .env
 .env.*
-!.env.example
-node_modules/
+.terse
 dist/
-.DS_Store
+generated/
+node_modules/

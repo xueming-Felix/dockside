@@ -9,3 +9,27 @@
 **Provisioning deviations:** Lark admitted only the creating Codex bot (cross-app bot invites are refused), and Botmux skipped the group's working-directory binding after that partial failure. The Codex bot's binding to this folder was added by hand under Botmux's own bots.json file lock, with a backup outside Git. Adding Felix-Claude is an owner step; `scripts/add-bot.mjs` then mirrors its binding.
 
 **Scope and status:** initialization complete. Plan, personas and scenario are the owner's team decisions as recorded in PLAN.md, not assistant proposals. No application code, task, schedule, paid API use, deployment or Devpost action was started here.
+
+## 2026-10-31 — Finish Felix-Claude's Dockside routing
+
+**User direction:** assign Felix-Claude to this workspace after its message was rejected as an unassigned project group. [Request](journal/2026-10/cap_93307716-7b05-4e24-b628-c96d1702a4a7.md).
+
+**Finding and action:** Lark confirmed Felix-Claude was already a group member. Workspace resolves bindings separately for each bot; only Felix had the Dockside binding. Added the wildcard group binding for Claude app `cli_aa52cde0b578c08b` through Workspace and the matching Dockside directory entry in Botmux under its file lock, with a private backup outside Git. This repairs routing; no separate project-owner role is involved. The broader onboarding script was unnecessary because it changes other groups and settings and restarts services. No Claude session existed in this group, and oncall mappings refresh from disk, so no session migration or restart was needed.
+
+**Verification:** Workspace readback shows both group bindings and an active project; Botmux now reports Claude's directory source as `oncall`. The next human message is the remaining end-to-end inbound check; no blocked prompt was replayed. [Repair receipt](journal/2026-10/cap_e7d00598-a9dc-4073-8e2f-06d29a87e34b.md).
+
+## 2026-10-31 — Person A implementation started by Felix-Claude
+
+**User direction:** "Start implementation for person A. if blocked or you need any resources, let me know. otherwise keep doing. On the side, build a temporary dashboard for me to understand the whole project status (diagram better)." [Request](journal/2026-10/cap_62aea7a3-1d4e-4aeb-9cc8-ef740d62821f.md). Later in the same topic the owner completed the Terse device login and created the Terse API token.
+
+**Assistant choices and why:**
+- Toolchain: Bun 1.4.4 (npm) and Terse CLI 0.14.9 (`bunx terse-cli install --yes`); both symlinked into `/opt/homebrew/bin` because the owner's shell could not find `terse`. Login ran in device-code mode (`terse auth login --no-browser`) so the owner could sign in from any browser; the first code expired while the organization was being created and a second one completed.
+- Contract: `shared/types.ts` follows PLAN.md's shapes; additions are marked `[added]` (Snapshot `timers`, `realStart`, `frozen`, `seeded`; Appt `durationMin`, `arrivedMin`, `doneMin`; Offer `atMin`, `fromDoor`, `fromStartMin`; Auction `status`, `reason`; a `Scenario` type; a `DockApi` interface with result types; extra Event kinds; methods `freeze`, `resume`, `setSpeed`, `tick`, `backhaul`; an optional fifth argument on `request()` for unknown trucks). Nothing from the plan was renamed or removed. `shared/pier9.ts` holds the default seed.
+- Actor id is `pier9-2026-10-31`, not the plan's `pier9:2026-10-31`: Terse actor ids allow only letters, digits, `.`, `-` and `_`.
+- Door-down beat uses door 5: PLAN's key 4 closes door 3 (a dry door) but expects reefer T5 to be displaced. The seed puts T5 on door 5 (reefer); the scenario runner should call `setDoor(5, false)`.
+- `replan()` semantics: incumbents keep any slot that is still feasible, so unaffected trucks never churn; a pinned truck (counter) and hot loads (prioritize) preempt; displaced and re-queued trucks fill gaps by priority, then eta. Offers are applied immediately (the board shows the move at once); `accept` confirms, `counter` re-pins, `decline` re-queues; a truck's older open offers expire when it moves again. The detention claim is $150 at the alarm (two hours at $75) and grows by the hour, matching PLAN's act 3 number.
+- Runtime constraints found while bringing the actor up: every method on the actor prototype must be async, private helpers included; relative imports need explicit `.js` extensions because the Terse compiler uses Node16 resolution; results and broadcasts must be strict JSON, so op outputs are JSON round-tripped to drop `undefined`.
+- The requested status page is a Claude artifact (private link, https://claude.ai/artifact/GLxbt3J88EXQu4e2FXrnCg) rather than a file in the repository, because the owner called it temporary.
+- No Workspace task was created: the owner asked for the work in this topic and is steering it live; a `--run` task would dispatch a second agent on the same code.
+
+**Verification:** 19 `bun test` cases pass and `tsc --noEmit` is clean for the actor; `terse actor dev` compiles and serves the actor; `actor/scripts/drive.ts` exercised seed, the collision, swap and pay, arrive, reportEta, setDoor and counter against the local runtime with the expected results. Deploy and the dashboard browser check were still in progress when this entry was written.
