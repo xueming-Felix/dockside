@@ -335,3 +335,171 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   .inbox-head .live { animation: none; }
   .tab { transition: none; }
 }
+
+/* walkthrough: scenarios 1 and 2 as a static, step-by-step illustration (Walkthrough.tsx). No strip, no replay footer:
+   the header stays, a bar with the scenario pills / step title / Prev-Next, then three panes for a step or one wide card. */
+.walk { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; min-height: 0; }
+.walk-bar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 18px; padding: 8px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+.walk-scn { display: flex; gap: 6px; }
+.walk-scn button { display: inline-flex; align-items: center; gap: 8px; height: 36px; margin: 0; padding: 0 8px 0 6px; font: inherit; font-size: 13.5px; font-weight: 500; color: var(--muted);
+  background: transparent; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; white-space: nowrap; transition: color 0.15s, border-color 0.15s, background-color 0.15s; }
+.walk-scn button:hover { color: var(--fg); border-color: var(--muted); }
+.walk-scn button .n { width: 24px; height: 24px; border-radius: 50%; background: var(--line); color: var(--fg); font-family: var(--mono); font-size: 13.5px; font-weight: 600; line-height: 24px; text-align: center; }
+.walk-scn button.active { color: var(--fg); background: rgba(108,194,230,0.12); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.walk-scn button.active .n { background: var(--accent); color: #06202c; }
+.walk kbd { font-family: var(--mono); font-size: 10px; line-height: 1; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 3px 4px 2px; margin-left: 4px; }
+.walk-step { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.walk-step .ind { font-family: var(--mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); white-space: nowrap; }
+.walk-step h1 { margin: 0; font-size: clamp(20px, 1.3vw, 25px); font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.walk-nav { display: flex; gap: 8px; }
+.walk-nav button { display: inline-flex; align-items: center; gap: 6px; height: 40px; margin: 0; padding: 0 14px; font: inherit; font-size: 14.5px; font-weight: 600; color: var(--fg);
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px; cursor: pointer; white-space: nowrap; transition: border-color 0.15s, background-color 0.15s, opacity 0.15s; }
+.walk-nav button:hover:not(:disabled) { border-color: var(--muted); }
+.walk-nav button:disabled { opacity: 0.35; cursor: default; }
+.walk-nav button kbd { margin: 0; }
+.walk-nav button.primary { background: var(--accent); color: #06202c; border-color: var(--accent); }
+.walk-nav button.primary:hover { background: #86d0ee; border-color: #86d0ee; }
+.walk-nav button.primary kbd { color: #06202c; border-color: rgba(6,32,44,0.45); }
+
+/* the three panes of a step: the dock 30 · Agent Relay 42 · why 28 */
+.walk-panes { display: grid; grid-template-columns: minmax(0, 30fr) minmax(0, 42fr) minmax(0, 28fr); gap: 10px; min-height: 0; }
+.walk .panel h2 { font-size: 13.5px; }
+.walk .panel h2 small { margin-left: 6px; }
+.walk-h3, .walk-inbox h3 { margin: 0; padding: 6px 12px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em; border-bottom: 1px solid var(--line); background: var(--panel-2); }
+.walk-h3 { border-top: 1px solid var(--line); }
+.walk-h3 small, .walk-inbox h3 small, .walk-card h3 small { color: var(--muted); font-weight: 400; margin-left: 8px; font-family: var(--mono); font-size: 11px; letter-spacing: 0; }
+
+/* mini board: the same row/track/block classes as the main Gantt, sized for a 30% pane */
+.mg { padding: 8px 12px 6px; }
+.mgantt { display: grid; grid-template-rows: 18px; grid-auto-rows: 44px; gap: 5px; }
+.mgantt .row { grid-template-columns: 62px minmax(0, 1fr); gap: 6px; }
+.mgantt .row.head .hour { font-size: 10.5px; top: 1px; }
+.mgantt .door { padding-left: 2px; }
+.mgantt .door b { font-size: 13px; line-height: 1.15; } .mgantt .door span { font-size: 10px; letter-spacing: 0.04em; }
+.mgantt .oos { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--detention); }
+.mgantt .blk { top: 5px; bottom: 5px; padding: 0 4px; border-radius: 4px; align-items: center; }
+.mgantt .blk b { font-size: 13px; }
+.mgantt .blk.hl { z-index: 3; box-shadow: 0 0 0 2px var(--panel-2), 0 0 0 3.5px var(--accent), 0 0 16px 3px rgba(108,194,230,0.55); animation: walkglow 1.8s ease-in-out infinite; }
+@keyframes walkglow {
+  0%, 100% { box-shadow: 0 0 0 2px var(--panel-2), 0 0 0 3.5px var(--accent), 0 0 10px 2px rgba(108,194,230,0.35); }
+  50% { box-shadow: 0 0 0 2px var(--panel-2), 0 0 0 3.5px var(--accent), 0 0 22px 5px rgba(108,194,230,0.8); }
+}
+/* one line per slot under the board: swatch in the block's colour, truck, carrier, slot, state */
+.mg .slots { list-style: none; margin: 7px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+.mg .slots li { display: flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; }
+.mg .slots .sw { flex: none; width: 14px; height: 10px; border-radius: 2px; background: var(--booked); border: 1.5px solid transparent; }
+.mg .slots li.pending .sw { border-color: #fff; border-style: dashed; }
+.mg .slots li.arrived .sw { background: var(--arrived); } .mg .slots li.done .sw { background: var(--done); }
+.mg .slots li.hl .sw { box-shadow: 0 0 0 1.5px var(--panel), 0 0 0 2.5px var(--accent); }
+.mg .slots b { font-family: var(--mono); font-size: 12.5px; color: var(--fg); min-width: 30px; }
+.mg .slots .who { color: var(--fg); }
+.mg .slots em { font-style: normal; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.mg .slots li.pending em { color: var(--deal); }
+.mg .slots .chg { margin-left: auto; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+
+/* actor log: cumulative, grouped by step, the current step bright; the marker says what kind of line it is */
+.walk-log { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 12px 10px; font-family: var(--mono); font-size: 12.5px; line-height: 1.4; display: flex; flex-direction: column; gap: 3px; }
+.walk-log .stepmark { margin: 7px 0 1px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); opacity: 0.7; }
+.walk-log .stepmark:first-child { margin-top: 0; }
+.walk-log .stepmark.cur { color: var(--accent); opacity: 1; }
+.walk-log .ln { padding: 2px 7px 2px 9px; border-left: 3px solid var(--muted); border-radius: 0 3px 3px 0; white-space: pre-wrap; overflow-wrap: anywhere; transition: opacity 0.3s, background-color 0.3s; }
+.walk-log .ln.call { border-left-color: var(--accent); }
+.walk-log .ln.out { border-left-color: var(--settle); }
+.walk-log .ln.internal { border-left-color: var(--deal); }
+.walk-log .ln.old { opacity: 0.45; }
+.walk-log .ln.cur { background: rgba(255,255,255,0.035); }
+
+/* the two inboxes side by side; the chat and bubble styles are the carrier tab's, with the walkthrough's kinds */
+.walk-inboxes { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.walk-inbox { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.walk-inbox + .walk-inbox { border-left: 1px solid var(--line); }
+.walk-inbox h3 code { color: var(--accent); font-size: 13px; }
+.walk .chat { padding: 10px 12px 12px; gap: 9px; }
+.walk .chat .empty-inbox { font-size: 15px; }
+.walk .msg { max-width: 92%; padding: 6px 10px 5px; }
+.walk .msg .who i { font-style: normal; color: var(--muted); }
+.walk .msg .txt { font-size: 14.5px; }
+.walk .msg .meta { font-size: 10px; }
+.walk .msg.offer { border-left-color: var(--accent); }
+.walk .msg.swap, .walk .msg.counter { border-left-color: var(--deal); }
+.walk .msg.agree { border-left-color: var(--settle); }
+.walk .msg.settle { border-left-color: var(--settle); background: rgba(63,191,127,0.12); }
+.walk .msg.system { border-left-color: var(--muted); }
+.walk .msg.new { animation: walkin 0.5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes walkin { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* what happened · why it matters, with the tiny screen list pinned to the bottom */
+.walk-why .body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px 10px; display: flex; flex-direction: column; gap: 10px; }
+.walk .tech { font-size: 11.5px; padding: 3px 8px; }
+.walk-why .body .tech { align-self: flex-start; }
+.walk-why .what { margin: 0; font-size: 15px; line-height: 1.45; overflow-wrap: anywhere; }
+.walk-why .why { margin: 0; font-size: 14px; line-height: 1.45; font-style: italic; color: var(--accent); padding-left: 10px; border-left: 2px solid rgba(108,194,230,0.45); overflow-wrap: anywhere; }
+.walk .callout { font-size: 13px; line-height: 1.4; color: var(--deal); border: 1px solid rgba(242,185,75,0.5); background: rgba(242,185,75,0.08); border-radius: 6px; padding: 7px 10px; overflow-wrap: anywhere; }
+.walk-steps { list-style: none; margin: 0; padding: 7px 8px 8px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 1px; }
+.walk-steps button { display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 8px; align-items: center; width: 100%; margin: 0; padding: 2px 6px; font: inherit; font-size: 12.5px; text-align: left; color: var(--muted);
+  background: transparent; border: 0; border-radius: 4px; cursor: pointer; }
+.walk-steps button:hover { color: var(--fg); background: var(--panel-2); }
+.walk-steps .num { width: 20px; height: 20px; border-radius: 50%; background: var(--line); color: var(--fg); font-family: var(--mono); font-size: 11px; font-weight: 600; line-height: 20px; text-align: center; }
+.walk-steps .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.walk-steps li.past .num { background: rgba(63,191,127,0.18); color: var(--settle); box-shadow: inset 0 0 0 1px rgba(63,191,127,0.45); }
+.walk-steps li.cur button { color: var(--fg); background: rgba(108,194,230,0.10); }
+.walk-steps li.cur .num { background: var(--accent); color: #06202c; }
+
+/* the setting, background and outcome screens: one wide card, large type, two columns */
+.walk-card { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 22px 48px; align-content: start; width: 100%; max-width: 1720px; margin: 0 auto; padding: 30px 44px 34px; overflow-y: auto; }
+.walk-card .card-main, .walk-card .card-side { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.walk-card .kicker { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--settle); }
+.walk-card h3 { margin: 8px 0 -4px; font-family: var(--mono); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.walk-card .card-side h3:first-child { margin-top: 0; }
+.walk-card .lede { margin: 0; font-size: 25px; line-height: 1.4; font-weight: 500; letter-spacing: -0.005em; overflow-wrap: anywhere; }
+.walk-card .para { margin: 0; font-size: 19.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.walk-card .watch { margin: 0; font-size: 19px; line-height: 1.5; font-style: italic; color: var(--accent); padding: 12px 16px; border-left: 3px solid var(--accent); background: rgba(108,194,230,0.07); border-radius: 0 6px 6px 0; overflow-wrap: anywhere; }
+.walk-card .big { margin: 0; font-size: 30px; line-height: 1.35; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.walk-card.outcome-card { border-color: rgba(63,191,127,0.55); background: linear-gradient(180deg, rgba(63,191,127,0.07), transparent 40%), var(--panel); }
+.walk-card .mg { padding: 0; }
+.walk-card .mg .slots { font-size: 13px; }
+.walk-card .callout { font-size: 16px; padding: 10px 14px; }
+.cast { width: 100%; border-collapse: collapse; font-size: 16px; }
+.cast th { text-align: left; font-family: var(--mono); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 0 14px 8px 0; border-bottom: 1px solid var(--line); }
+.cast td { padding: 10px 14px 10px 0; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.4; }
+.cast tr > :last-child { padding-right: 0; }
+.cast tr > :nth-child(-n+3) { white-space: nowrap; } /* handle, role and rate stay on one line; the rule column wraps */
+.cast code { color: var(--accent); font-size: 15.5px; }
+.cast .num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.cast td.line { color: var(--muted); }
+.wants { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.wants li { display: flex; flex-direction: column; gap: 3px; padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--hot); border-radius: 6px; font-size: 17.5px; line-height: 1.4; overflow-wrap: anywhere; }
+.wants code { color: var(--accent); font-size: 15.5px; }
+.arc { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.arc li { display: grid; grid-template-columns: 26px auto minmax(0, 1fr); align-items: center; column-gap: 10px; font-size: 17px; }
+.arc .num { width: 26px; height: 26px; border-radius: 50%; background: rgba(63,191,127,0.18); color: var(--settle); box-shadow: inset 0 0 0 1px rgba(63,191,127,0.45); font-family: var(--mono); font-size: 13px; font-weight: 600; line-height: 26px; text-align: center; }
+.arc .t { overflow-wrap: anywhere; }
+
+/* 1440×900: an hour column is ~33px in the mini board, so the block keeps its truck id only and every other hour label */
+@media (max-width: 1600px) {
+  .walk-bar { column-gap: 14px; }
+  .walk-scn button { font-size: 13px; gap: 6px; }
+  .walk-nav button { height: 36px; padding: 0 12px; font-size: 13.5px; }
+  .mgantt { grid-auto-rows: 40px; }
+  .mgantt .row { grid-template-columns: 54px minmax(0, 1fr); }
+  .mgantt .door b { font-size: 12px; }
+  .mgantt .blk { padding: 0 2px; }
+  .mgantt .blk b { font-size: 11.5px; }
+  .mgantt .row.head .hour:nth-child(even) { display: none; }
+  .mg .slots { font-size: 11.5px; gap: 2px; }
+  .walk-log { font-size: 12px; }
+  .walk .msg { max-width: 94%; }
+  .walk .msg .txt { font-size: 13.5px; }
+  .walk-why .what { font-size: 14.5px; } .walk-why .why { font-size: 13.5px; }
+  .walk-card { padding: 22px 28px 24px; gap: 16px 30px; }
+  .walk-card .card-main, .walk-card .card-side { gap: 13px; }
+  .walk-card .lede { font-size: 21px; } .walk-card .para, .walk-card .watch { font-size: 16.5px; } .walk-card .big { font-size: 25px; }
+  .walk-card .callout { font-size: 14px; }
+  .cast { font-size: 14px; } .cast code { font-size: 13.5px; } .cast td { padding: 7px 10px 7px 0; } .cast th { padding-right: 10px; }
+  .wants li { font-size: 15.5px; padding: 10px 14px; } .arc li { font-size: 15.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mgantt .blk.hl { animation: none; }
+  .walk .msg.new { animation: none; }
+  .walk-log .ln, .walk-scn button, .walk-nav button { transition: none; }
+}

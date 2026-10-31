@@ -9,6 +9,7 @@ import { useDock, useSimMin } from "./dock"
 import { useDriver, type CastMember, type RelayMsg, type StageMode } from "./driver"
 import { blockClass, lineKind, STATUS_WORD } from "./status"
 import { SceneControls, StoryPanel } from "./Story"
+import { Walkthrough } from "./Walkthrough"
 
 const pct = (m: number) => `${(Math.max(0, Math.min(DAY_END_MIN, m)) / DAY_END_MIN) * 100}%`
 const HOURS = Array.from({ length: 10 }, (_, i) => i * 60)
@@ -34,6 +35,18 @@ export function App() {
 
   // The strip stays up before the first seed too: "Reset 08:00" is how the presenter seeds the dock from the projector.
   const strip = mode === "story" ? <SceneControls actorId={actorId} driver={driver} /> : <Controls actorId={actorId} driver={driver} />
+  const header = (
+    <header className="top">
+      <div className="brand"><b>Pier 9 Cold Storage</b><span>Dockside · agent-to-agent dock appointments</span></div>
+      <Tabs view={view} unread={unread} cast={driver.state?.cast ?? NO_CAST} onPick={setView} />
+      {snap?.seeded && <Clock snap={snap} sim={shownSim} />}
+      {snap?.seeded && <Counters snap={snap} />}
+      <div className={`conn ${feed.status}`} title={feed.error ?? ""}><i />{feed.status === "open" ? "live" : feed.status}</div>
+    </header>
+  )
+  // The Walkthrough is static content: it renders with or without a seeded dock, and without the strip or the replay footer,
+  // so none of the strip's key handlers are mounted while the presenter steps through it with the arrows.
+  if (view === "walkthrough") return <div className="app">{header}<Walkthrough /></div>
   if (!snap || !snap.seeded) return (
     <div className="app app-empty">
       <Empty status={feed.status} error={feed.error} actorId={actorId} />
@@ -42,13 +55,7 @@ export function App() {
   )
   return (
     <div className="app">
-      <header className="top">
-        <div className="brand"><b>Pier 9 Cold Storage</b><span>Dockside · agent-to-agent dock appointments</span></div>
-        <Tabs view={view} unread={unread} cast={driver.state?.cast ?? NO_CAST} onPick={setView} />
-        <Clock snap={snap} sim={shownSim} />
-        <Counters snap={snap} />
-        <div className={`conn ${feed.status}`} title={feed.error ?? ""}><i />{feed.status === "open" ? "live" : feed.status}</div>
-      </header>
+      {header}
       {/* A carrier tab swaps the board for that agent's view; header, replay and the scene strip stay, so steps run from any tab. */}
       {view !== "board" ? <CarrierView handle={view} snap={snap} sim={shownSim} state={driver.state} /> : (
         <main className={`grid ${mode}`}>

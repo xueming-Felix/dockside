@@ -10,9 +10,10 @@ import { blockClass, lineKind, STATUS_WORD } from "./status"
 /** The tabs after Board, in stage order; carrier-x (the unknown carrier) has no tab. */
 export const TAB_ORDER = ["carrier-a", "carrier-b", "carrier-c", "carrier-d", "broker", "shipper", "pier9-ops"] as const
 export type Handle = (typeof TAB_ORDER)[number]
-export type View = "board" | Handle
+/** Board, the static Walkthrough (#walkthrough, see Walkthrough.tsx), or one agent's tab. */
+export type View = "board" | "walkthrough" | Handle
 const isHandle = (h: string): h is Handle => (TAB_ORDER as readonly string[]).includes(h)
-const readHash = (): View => { const h = location.hash.replace(/^#/, "").toLowerCase(); return isHandle(h) ? h : "board" }
+const readHash = (): View => { const h = location.hash.replace(/^#/, "").toLowerCase(); return h === "walkthrough" ? h : isHandle(h) ? h : "board" }
 const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches
 const pad = (n: number) => String(n).padStart(2, "0")
 const usd = (n: number) => `$${Math.round(n).toLocaleString()}`
@@ -43,7 +44,7 @@ export function useUnread(feed: RelayMsg[], view: View): Record<string, number> 
   // `at` is the driver's arrival clock, so "seen up to" compares message times with message times, never with this machine's clock.
   const [seenUntil, setSeenUntil] = useState<Partial<Record<Handle, number>>>({})
   useEffect(() => {
-    if (view === "board") return
+    if (!isHandle(view)) return // Board and the Walkthrough have no inbox
     const last = inboxes[view].reduce((m, x) => Math.max(m, x.at), 0)
     setSeenUntil(prev => (prev[view] ?? -1) >= last ? prev : { ...prev, [view]: last })
   }, [view, inboxes])
@@ -55,6 +56,8 @@ export const Tabs = memo(function Tabs({ view, unread, cast, onPick }: { view: V
   return (
     <nav className="tabs" role="tablist" aria-label="Views">
       <button type="button" role="tab" aria-selected={view === "board"} className={`tab ${view === "board" ? "active" : ""}`} onClick={() => onPick("board")} title="The dock's board">Board</button>
+      <button type="button" role="tab" aria-selected={view === "walkthrough"} className={`tab ${view === "walkthrough" ? "active" : ""}`} onClick={() => onPick("walkthrough")}
+        title="Scenarios 1 and 2 step by step, as an illustration: nothing here talks to the dock or to Agent Relay">Walkthrough</button>
       {TAB_ORDER.map(h => {
         const n = unread[h] ?? 0
         const who = cast.find(c => c.handle === h)
@@ -211,7 +214,7 @@ function Bubble({ m, me, handle }: { m: RelayMsg; me: boolean; handle: string })
 }
 
 /** Marks the viewing agent's own @mention inside a line, so the room sees why the message reached this inbox. */
-function highlight(text: string, handle: string) {
+export function highlight(text: string, handle: string) {
   const parts = text.split(new RegExp(`(@${escapeRe(handle)})(?![a-z0-9-])`, "i"))
   return parts.length === 1 ? text : parts.map((p, i) => (i % 2 === 1 ? <mark key={i}>{p}</mark> : p))
 }
