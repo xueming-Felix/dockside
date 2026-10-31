@@ -1,0 +1,437 @@
+[
+ {
+  "start": 4.5,
+  "end": 5.99,
+  "text": "A truck needs a time at a"
+ },
+ {
+  "start": 5.96,
+  "end": 6.88,
+  "text": "warehouse door."
+ },
+ {
+  "start": 6.85,
+  "end": 8.4,
+  "text": "Today that's a phone call,"
+ },
+ {
+  "start": 8.37,
+  "end": 10.58,
+  "text": "and when something goes wrong it's six"
+ },
+ {
+  "start": 10.55,
+  "end": 11.31,
+  "text": "phone calls."
+ },
+ {
+  "start": 11.28,
+  "end": 12.94,
+  "text": "This is Pier 9 Cold Storage:"
+ },
+ {
+  "start": 12.91,
+  "end": 14.39,
+  "text": "six doors, twelve trucks,"
+ },
+ {
+  "start": 14.36,
+  "end": 16.69,
+  "text": "and eight companies whose agents are all"
+ },
+ {
+  "start": 16.66,
+  "end": 17.59,
+  "text": "on Agent Relay."
+ },
+ {
+  "start": 17.56,
+  "end": 19.72,
+  "text": "We won't touch the keyboard except to"
+ },
+ {
+  "start": 19.69,
+  "end": 20.77,
+  "text": "break things."
+ },
+ {
+  "start": 21.67,
+  "end": 23.66,
+  "text": "Two carriers just asked for door 4"
+ },
+ {
+  "start": 23.63,
+  "end": 25.69,
+  "text": "at two o'clock in the same instant."
+ },
+ {
+  "start": 25.66,
+  "end": 27.32,
+  "text": "The dock is a Durable Actor,"
+ },
+ {
+  "start": 27.29,
+  "end": 28.61,
+  "text": "one request at a time,"
+ },
+ {
+  "start": 28.58,
+  "end": 30.02,
+  "text": "so it can't double-book."
+ },
+ {
+  "start": 29.99,
+  "end": 31.98,
+  "text": "One got it, one got three o'clock."
+ },
+ {
+  "start": 31.95,
+  "end": 33.67,
+  "text": "Now watch the one who lost go"
+ },
+ {
+  "start": 33.64,
+  "end": 35.85,
+  "text": "straight to the winner with cash."
+ },
+ {
+  "start": 36.77,
+  "end": 39.06,
+  "text": "A hundred and fifty dollars changed hands,"
+ },
+ {
+  "start": 39.03,
+  "end": 40.9,
+  "text": "the actor swapped them atomically,"
+ },
+ {
+  "start": 40.87,
+  "end": 42.28,
+  "text": "and nobody asked us."
+ },
+ {
+  "start": 43.17,
+  "end": 44.95,
+  "text": "The broker's truck just checked in at"
+ },
+ {
+  "start": 44.92,
+  "end": 45.32,
+  "text": "door 1."
+ },
+ {
+  "start": 45.29,
+  "end": 46.19,
+  "text": "Remember it."
+ },
+ {
+  "start": 47.1,
+  "end": 47.61,
+  "text": "Traffic."
+ },
+ {
+  "start": 47.58,
+  "end": 49.6,
+  "text": "Two of Carrier A's trucks are ninety"
+ },
+ {
+  "start": 49.57,
+  "end": 51.7,
+  "text": "minutes out, so two slots just opened,"
+ },
+ {
+  "start": 51.67,
+  "end": 53.26,
+  "text": "and the dock put them up for"
+ },
+ {
+  "start": 53.23,
+  "end": 54.02,
+  "text": "auction."
+ },
+ {
+  "start": 54.93,
+  "end": 56.85,
+  "text": "That close was an alarm inside the"
+ },
+ {
+  "start": 56.82,
+  "end": 57.99,
+  "text": "actor, not a person."
+ },
+ {
+  "start": 57.96,
+  "end": 60.09,
+  "text": "Carrier B's truck just moved from noon"
+ },
+ {
+  "start": 60.06,
+  "end": 61.01,
+  "text": "to nine o'clock:"
+ },
+ {
+  "start": 60.98,
+  "end": 63.12,
+  "text": "three hours of detention it will never"
+ },
+ {
+  "start": 63.09,
+  "end": 63.66,
+  "text": "pay."
+ },
+ {
+  "start": 64.57,
+  "end": 65.44,
+  "text": "Door 5 is out."
+ },
+ {
+  "start": 65.41,
+  "end": 66.68,
+  "text": "That's a reefer door;"
+ },
+ {
+  "start": 66.65,
+  "end": 68.37,
+  "text": "the cold load can't use a dry"
+ },
+ {
+  "start": 68.34,
+  "end": 70.52,
+  "text": "door, and its agent knows exactly who"
+ },
+ {
+  "start": 70.49,
+  "end": 71.92,
+  "text": "holds the slot it needs."
+ },
+ {
+  "start": 71.89,
+  "end": 73.78,
+  "text": "Two hundred dollars, two rounds,"
+ },
+ {
+  "start": 73.75,
+  "end": 76.31,
+  "text": "and the board re-plans around the deal."
+ },
+ {
+  "start": 77.2,
+  "end": 79.07,
+  "text": "An unknown carrier wants a door for"
+ },
+ {
+  "start": 79.04,
+  "end": 80.4,
+  "text": "a load that isn't theirs."
+ },
+ {
+  "start": 80.37,
+  "end": 81.98,
+  "text": "The warehouse asks the broker."
+ },
+ {
+  "start": 81.95,
+  "end": 84.02,
+  "text": "Refused, and the dock never heard about"
+ },
+ {
+  "start": 83.99,
+  "end": 84.5,
+  "text": "it."
+ },
+ {
+  "start": 85.4,
+  "end": 86.02,
+  "text": "Paperwork."
+ },
+ {
+  "start": 85.99,
+  "end": 88.01,
+  "text": "Carrier B's truck is running long at"
+ },
+ {
+  "start": 87.98,
+  "end": 89.68,
+  "text": "door 2, so the truck behind it"
+ },
+ {
+  "start": 89.65,
+  "end": 91.4,
+  "text": "gets pushed to noon and opens a"
+ },
+ {
+  "start": 91.37,
+  "end": 92.9,
+  "text": "thread looking for a trade."
+ },
+ {
+  "start": 92.87,
+  "end": 93.93,
+  "text": "Nobody bites."
+ },
+ {
+  "start": 94.83,
+  "end": 96.08,
+  "text": "Those two couldn't agree,"
+ },
+ {
+  "start": 96.05,
+  "end": 97.37,
+  "text": "so the clock decided."
+ },
+ {
+  "start": 98.27,
+  "end": 99.91,
+  "text": "Second auction closed itself;"
+ },
+ {
+  "start": 99.88,
+  "end": 102.23,
+  "text": "the owner-operator takes ten o'clock."
+ },
+ {
+  "start": 103.13,
+  "end": 105.15,
+  "text": "The shipper needs this load today."
+ },
+ {
+  "start": 105.12,
+  "end": 106.58,
+  "text": "Four agents, one thread:"
+ },
+ {
+  "start": 106.55,
+  "end": 108.74,
+  "text": "the broker will yield eleven o'clock,"
+ },
+ {
+  "start": 108.71,
+  "end": 110.79,
+  "text": "but only for a detention waiver and"
+ },
+ {
+  "start": 110.76,
+  "end": 111.98,
+  "text": "someone's noon slot."
+ },
+ {
+  "start": 111.95,
+  "end": 114.03,
+  "text": "Carrier B sells its noon for eighty"
+ },
+ {
+  "start": 114,
+  "end": 114.54,
+  "text": "dollars."
+ },
+ {
+  "start": 114.51,
+  "end": 116.52,
+  "text": "Watch the warehouse sign off."
+ },
+ {
+  "start": 117.43,
+  "end": 119.17,
+  "text": "And that alarm fired on its own,"
+ },
+ {
+  "start": 119.14,
+  "end": 120.78,
+  "text": "for the truck everyone forgot."
+ },
+ {
+  "start": 120.75,
+  "end": 121.97,
+  "text": "Two hours at the door,"
+ },
+ {
+  "start": 121.94,
+  "end": 123.73,
+  "text": "the claim landed at a hundred and"
+ },
+ {
+  "start": 123.7,
+  "end": 125.75,
+  "text": "fifty dollars, and the waiver from the"
+ },
+ {
+  "start": 125.72,
+  "end": 127.11,
+  "text": "deal applied itself."
+ },
+ {
+  "start": 128,
+  "end": 129.15,
+  "text": "Third auction of the day,"
+ },
+ {
+  "start": 129.12,
+  "end": 130.67,
+  "text": "and nobody pressed anything."
+ },
+ {
+  "start": 131.57,
+  "end": 132.82,
+  "text": "Empty door, empty truck,"
+ },
+ {
+  "start": 132.79,
+  "end": 134.34,
+  "text": "and the broker loads it with a"
+ },
+ {
+  "start": 134.31,
+  "end": 135.83,
+  "text": "backhaul on the way out."
+ },
+ {
+  "start": 136.73,
+  "end": 138.98,
+  "text": "Ten exceptions, five negotiations,"
+ },
+ {
+  "start": 138.95,
+  "end": 141.57,
+  "text": "three auctions, six alarms that fired on"
+ },
+ {
+  "start": 141.54,
+  "end": 143.41,
+  "text": "their own, zero phone calls."
+ },
+ {
+  "start": 143.38,
+  "end": 145.37,
+  "text": "Every scarce thing in freight,"
+ },
+ {
+  "start": 145.34,
+  "end": 146.39,
+  "text": "a door, a load,"
+ },
+ {
+  "start": 146.36,
+  "end": 148.48,
+  "text": "a container, is a Durable Actor;"
+ },
+ {
+  "start": 148.45,
+  "end": 150.75,
+  "text": "every company is an agent on Relay;"
+ },
+ {
+  "start": 150.72,
+  "end": 152.34,
+  "text": "every clock is an alarm."
+ },
+ {
+  "start": 152.31,
+  "end": 154.62,
+  "text": "We built the receiver's dock today."
+ },
+ {
+  "start": 154.59,
+  "end": 156.6,
+  "text": "The broker's desk is next."
+ }
+]

@@ -1,0 +1,10 @@
+# generated media stays out of Git; the EDL, the generator and the compositions are the record
+assets/take.mp4
+assets/voice/
+assets/transcripts/
+assets/transcript.*
+renders/
+.hyperframes/
+*.mp4
+*.aiff
+*.wav

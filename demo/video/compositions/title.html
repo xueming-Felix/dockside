@@ -1,0 +1,33 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: Inter, sans-serif; color: #e6edf7; }
+    #title-bg { position: absolute; inset: 0; background: #0b1220; }
+    #title-wrap { position: absolute; left: 160px; top: 0; bottom: 0; width: 1600px; display: flex; flex-direction: column; justify-content: center; }
+    #title-name { font-size: 136px; font-weight: 900; letter-spacing: -0.035em; line-height: 1; margin: 0; }
+    #title-name .w, #title-tag .w { display: inline-block; }
+    #title-tag { font-size: 48px; font-weight: 400; line-height: 1.25; margin: 30px 0 0; max-width: 1500px; color: #c7d2e3; }
+    #title-tag .acc { color: #5eead4; }
+    #title-meta { font-family: "IBM Plex Mono", monospace; font-size: 28px; color: #7d8aa3; margin: 60px 0 0; }
+  </style>
+  <div id="root" data-composition-id="title" data-width="1920" data-height="1080">
+    <div id="title-card" class="clip" data-start="0" data-duration="4.4">
+      <div id="title-bg"></div>
+      <div id="title-wrap">
+        <h1 id="title-name"><span class="w">Dockside</span></h1>
+        <p id="title-tag"><span class="w">Dock</span> <span class="w">appointments</span> <span class="w">that</span> <span class="w">re-plan</span> <span class="w">themselves,</span> <span class="w acc">agent</span> <span class="w acc">to</span> <span class="w acc">agent.</span></p>
+        <p id="title-meta">Haunted Hacks · YC San Francisco · October 31, 2026</p>
+      </div>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#title-name .w", { opacity: 0.55, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.35, ease: "power4.out" }, 0);
+      tl.fromTo("#title-tag .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.13, ease: "power3.out", stagger: 0.067 }, 0.6);
+      tl.fromTo("#title-meta", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 1.4);
+      tl.to("#title-wrap", { opacity: 0, filter: "blur(8px)", duration: 0.25, ease: "power3.in" }, 4.05);
+      tl.to("#title-bg", { opacity: 0, duration: 0.3, ease: "power2.inOut" }, 4.1);
+      window.__timelines["title"] = tl;
+    })();
+  </script>
+</template>

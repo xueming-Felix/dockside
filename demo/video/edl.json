@@ -1,0 +1,43 @@
+{
+  "source": "assets/take.mp4",
+  "chips": {
+    "collision": { "kicker": "Act 1 · 08:05", "text": "The collision" },
+    "traffic": { "kicker": "Act 2 · 09:00", "text": "The cascade" },
+    "hotload": { "kicker": "Act 3 · 10:15", "text": "The hot load" },
+    "close": { "kicker": "12:00", "text": "The counters" }
+  },
+  "segments": [
+    { "id": "open", "line": 1, "in": "08:00:00", "out": "08:05:00",
+      "text": "A truck needs a time at a warehouse door. Today that's a phone call, and when something goes wrong it's six phone calls. This is Pier 9 Cold Storage: six doors, twelve trucks, and eight companies whose agents are all on Agent Relay. We won't touch the keyboard except to break things." },
+    { "id": "collision", "line": 2, "in": "08:05:00", "out": "08:10:30",
+      "text": "Two carriers just asked for door 4 at two o'clock in the same instant. The dock is a Durable Actor, one request at a time, so it can't double-book. One got it, one got three o'clock. Now watch the one who lost go straight to the winner with cash." },
+    { "id": "settle", "line": 3, "in": "08:10:30",
+      "text": "A hundred and fifty dollars changed hands, the actor swapped them atomically, and nobody asked us." },
+    { "id": "broker", "line": 4, "in": "08:28:00",
+      "text": "The broker's truck just checked in at door 1. Remember it." },
+    { "id": "traffic", "line": 5, "in": "09:00:00", "out": "09:10:00",
+      "text": "Traffic. Two of Carrier A's trucks are ninety minutes out, so two slots just opened, and the dock put them up for auction." },
+    { "id": "auction1", "line": 6, "in": "09:10:00", "out": "09:20:00",
+      "text": "That close was an alarm inside the actor, not a person. Carrier B's truck just moved from noon to nine o'clock: three hours of detention it will never pay." },
+    { "id": "door5", "line": 7, "in": "09:20:00", "out": "09:30:00",
+      "text": "Door 5 is out. That's a reefer door; the cold load can't use a dry door, and its agent knows exactly who holds the slot it needs. Two hundred dollars, two rounds, and the board re-plans around the deal." },
+    { "id": "unknown", "line": 8, "in": "09:40:00", "out": "09:50:00",
+      "text": "An unknown carrier wants a door for a load that isn't theirs. The warehouse asks the broker. Refused, and the dock never heard about it." },
+    { "id": "overrun", "line": 9, "in": "09:50:00", "out": "10:00:00",
+      "text": "Paperwork. Carrier B's truck is running long at door 2, so the truck behind it gets pushed to noon and opens a thread looking for a trade. Nobody bites." },
+    { "id": "deadline", "line": 10, "in": "10:00:30",
+      "text": "Those two couldn't agree, so the clock decided." },
+    { "id": "auction2", "line": 11, "in": "10:10:00",
+      "text": "Second auction closed itself; the owner-operator takes ten o'clock." },
+    { "id": "hotload", "line": 12, "in": "10:15:00", "out": "10:28:00",
+      "text": "The shipper needs this load today. Four agents, one thread: the broker will yield eleven o'clock, but only for a detention waiver and someone's noon slot. Carrier B sells its noon for eighty dollars. Watch the warehouse sign off." },
+    { "id": "detention", "line": 13, "in": "10:28:00",
+      "text": "And that alarm fired on its own, for the truck everyone forgot. Two hours at the door, the claim landed at a hundred and fifty dollars, and the waiver from the deal applied itself." },
+    { "id": "auction3", "line": 14, "in": "11:29:30", "out": "11:41:00",
+      "text": "Third auction of the day, and nobody pressed anything." },
+    { "id": "backhaul", "line": 15, "in": "11:41:00",
+      "text": "Empty door, empty truck, and the broker loads it with a backhaul on the way out." },
+    { "id": "close", "line": 16, "in": "12:00:30", "shots": [ { "dur": 7.5, "zoom": { "scale": 2.6, "x": 1545, "y": 49 } }, {} ],
+      "text": "Ten exceptions, five negotiations, three auctions, six alarms that fired on their own, zero phone calls. Every scarce thing in freight, a door, a load, a container, is a Durable Actor; every company is an agent on Relay; every clock is an alarm. We built the receiver's dock today. The broker's desk is next." }
+  ]
+}

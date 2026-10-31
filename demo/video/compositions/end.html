@@ -1,0 +1,30 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: Inter, sans-serif; color: #e6edf7; }
+    #end-bg { position: absolute; inset: 0; background: #0b1220; }
+    #end-wrap { position: absolute; left: 160px; top: 0; bottom: 0; width: 1600px; display: flex; flex-direction: column; justify-content: center; }
+    #end-name { font-size: 96px; font-weight: 900; letter-spacing: -0.035em; line-height: 1; margin: 0; }
+    #end-repo { font-family: "IBM Plex Mono", monospace; font-size: 40px; color: #5eead4; margin: 36px 0 0; }
+    #end-stack { font-size: 28px; color: #7d8aa3; margin: 48px 0 0; }
+  </style>
+  <div id="root" data-composition-id="end" data-width="1920" data-height="1080">
+    <div id="end-card" class="clip" data-start="0" data-duration="4.5">
+      <div id="end-bg"></div>
+      <div id="end-wrap">
+        <h1 id="end-name">Dockside</h1>
+        <p id="end-repo">github.com/xueming-Felix/dockside</p>
+        <p id="end-stack">Durable Actors on Terse · Agent Relay · OpenAI gpt-5-mini · Bun · React</p>
+      </div>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#end-bg", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.inOut" }, 0);
+      tl.fromTo("#end-name", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25, ease: "power4.out" }, 0.3);
+      tl.fromTo("#end-repo", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power3.out" }, 0.45);
+      tl.fromTo("#end-stack", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 0.7);
+      window.__timelines["end"] = tl;
+    })();
+  </script>
+</template>

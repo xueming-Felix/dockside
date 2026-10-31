@@ -50,3 +50,11 @@ The owner asked for a simpler demo: one or two key scenarios that show the Durab
 ## Open items
 
 Person B's live Relay path (`BUS=relay BRAIN=llm`) is untested and not part of the demo; it needs the Agent Relay workspace key, the OpenAI key and a Devpost team. Person B should read the `[added]` marks in `shared/types.ts` and use `setDoor(5, false)` for the door-down beat. Credentials stay in ignored `.env` files, never in Git. The owner should rotate the Terse API token after the hackathon because it was pasted in chat.
+
+## Demo video (Felix-Claude, this topic)
+
+On 2026-10-31 at 13:14 the owner asked for research on heygen-com/hyperframes and for the demo video to be shot and cut, with the owner reading the script. [Request](journal/2026-10/cap_8c377343-86de-4c39-a5f6-cd1a1742d7d5.md). Findings: HyperFrames (Apache-2.0, v0.8.224 released that day, pre-1.0) renders a plain HTML composition to MP4 with headless Chrome and FFmpeg, ships Claude Code skills, Whisper captions and a local TTS, and does not record screens; it passed a smoke test on the Mac mini (ffmpeg and whisper-cpp installed via Homebrew, render about 2x realtime; Kokoro TTS is broken there, macOS `say` stands in).
+
+Built by 14:05: a headless-Chrome shoot of the ten-key day on a separate cloud actor (`pier9-video`, grant server on port 7120), 253 s at 1920x1080 with every beat time-stamped; `demo/video/` holds the HyperFrames project generated from an edit decision list (16 narration lines, act chips, captions, title and end card, 2:41) and the scripts to swap in the owner's voice. A 16-line sheet was sent to the owner at 13:35. At 14:06 the owner said "ok stop for now. we are rebuilding the demo, after that, we can record": the demo had meanwhile moved to story mode (three scenes), so that sheet is void and the cut will be re-based on the rebuilt demo when the owner says go. `demo/video/README.md` documents the pipeline.
+
+Open: the owner pasted the OpenAI and Relay workspace keys into the Dockside topic; the workspace captured them into `journal/` and commit 9766738 carries them. Rotate both keys after the hackathon or purge the history.

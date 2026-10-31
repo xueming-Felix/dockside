@@ -1,0 +1,116 @@
+{
+ "w0": 1.2729999999999961,
+ "wall0": 0.074,
+ "tReset": 1.234,
+ "tAuto": 3.089,
+ "frozenAt": 242.894,
+ "lastWall": 252.898,
+ "simToMp4": "mp4 = w0 + simMin - wall0",
+ "keyMarks": [
+  {
+   "wall": 6.72,
+   "mp4": 6.65,
+   "log": "08:05 collision: T13 booked 14:00; T14 offered 15:00"
+  },
+  {
+   "wall": 11.537,
+   "mp4": 11.46,
+   "log": "08:10 key 1 Collision: done"
+  },
+  {
+   "wall": 30.074,
+   "mp4": 30,
+   "log": "08:28 key 2 Truck arrives: done (T3 had already arrived at 08:28)"
+  },
+  {
+   "wall": 65.921,
+   "mp4": 65.85,
+   "log": "09:04 key 3 Traffic: done"
+  },
+  {
+   "wall": 71.552,
+   "mp4": 71.48,
+   "log": "09:10 a1 closed by alarm → award T6: ok"
+  },
+  {
+   "wall": 87.628,
+   "mp4": 87.55,
+   "log": "09:26 key 4 Door 5 down: done"
+  },
+  {
+   "wall": 107.318,
+   "mp4": 107.24,
+   "log": "09:45 key 5 Unknown carrier: done"
+  },
+  {
+   "wall": 114.553,
+   "mp4": 114.48,
+   "log": "09:52 key 6 Overrun: done"
+  },
+  {
+   "wall": 121.795,
+   "mp4": 121.72,
+   "log": "10:00 th2 went quiet → accept o6: ok"
+  },
+  {
+   "wall": 131.466,
+   "mp4": 131.39,
+   "log": "10:10 a2 closed by alarm → award T8: ok"
+  },
+  {
+   "wall": 141.529,
+   "mp4": 141.45,
+   "log": "10:20 key 7 Hot load: done"
+  },
+  {
+   "wall": 203.096,
+   "mp4": 203.02,
+   "log": "11:21 key 8 Hours of service: done"
+  },
+  {
+   "wall": 211.543,
+   "mp4": 211.47,
+   "log": "11:30 no-show auction a3: T13 bids ready 11:30: ok"
+  },
+  {
+   "wall": 221.589,
+   "mp4": 221.51,
+   "log": "11:40 a3 closed by alarm → award T13: ok"
+  },
+  {
+   "wall": 221.989,
+   "mp4": 221.91,
+   "log": "11:40 arrive T13 after award: ok"
+  },
+  {
+   "wall": 223.589,
+   "mp4": 223.51,
+   "log": "11:41 key 9 Backhaul: done"
+  },
+  {
+   "wall": 242.894,
+   "mp4": 242.82,
+   "log": "12:01 key 10 Freeze: done"
+  }
+ ],
+ "sim": {
+  "08:00": 1.199,
+  "08:05": 6.199,
+  "08:10": 11.199,
+  "08:28": 29.199,
+  "09:00": 61.199,
+  "09:10": 71.199,
+  "09:20": 81.199,
+  "09:40": 101.199,
+  "09:50": 111.199,
+  "10:00": 121.199,
+  "10:10": 131.199,
+  "10:15": 136.199,
+  "10:28": 149.199,
+  "11:20": 201.199,
+  "11:30": 211.199,
+  "11:40": 221.199,
+  "11:41": 222.199,
+  "12:00": 241.199
+ }
+}
