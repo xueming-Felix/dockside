@@ -1,6 +1,6 @@
 # Dockside · the 5-minute demo script (story mode)
 
-Three scene buttons at the bottom of the dashboard; pick two (scene 3 is optional). Each scene runs its own beats and the narration panel beside the Gantt fills in as it happens: what the dock just did, why it matters (Durable Actor / Agents on Relay / Alarm), and the exact lines the agents exchanged. The presenter reads the panel to the room and points at the board. Keys 1/2/3 start scenes, R resets.
+Three scene buttons at the bottom of the dashboard; pick two (scene 3 is optional). A scene runs one step at a time: after each step the strip shows a pulsing **Next step** button (space, enter or → also work) and waits for you, so you narrate at your own pace. The narration panel beside the Gantt fills in as each step runs: who did it (Durable Actor / Agents on Relay / Alarm / Dispatcher), what happened, why it matters, and the exact lines the agents exchanged, appearing one by one. Every agent line is also posted by that agent in #pier9 on Agent Relay; the carrier tabs in the header show each agent's own Relay inbox. Keys 1/2/3 start scenes, R resets.
 
 ## Setup, five minutes before
 
@@ -10,29 +10,34 @@ Projector: http://100.117.209.6:7110 full screen (or on the laptop: `cd dashboar
 
 > "A truck needs a time at a warehouse door. Today that's a phone call, and when something goes wrong it's six phone calls. This is Pier 9 Cold Storage: six doors, twelve trucks, eight companies whose agents are all on Agent Relay. The dock itself is a Durable Actor. We won't touch the keyboard except to break things."
 
-## Scene 1 · Two trucks, one door · about 60 s
+## Scene 1 · Two trucks, one door · about 90 s
 
-Click **1**. The panel walks through four steps; say one line per step while it fills:
+Click **1**, then **Next step** between beats. Say one line per step:
 
-1. *Durable Actor.* "Two carriers asked for door 4 at two o'clock in the same instant. The dock takes one request at a time, so it can't double-book: T14 got it, T13 got an offer for three o'clock." (Door 4 shows T14 at 14:00 and T13 at 15:00 with a dashed border.)
-2. *Agents.* "The loser doesn't call us. Its agent goes straight to the winner with cash." (SWAP? $120 appears in #pier9.)
-3. *Agents.* "A counter, then a deal: $150. Two rounds, and the rules stop them there." (COUNTER / AGREE.)
-4. *Dispatcher + actor.* "The settlement goes to the dock, which swaps the two slots atomically and records the money." (The blocks trade places; side payments $150.)
+1. *Durable Actor.* "Carrier B asks for door 4 at two o'clock. One call, booked." (T14 appears on door 4 at 14:00.)
+2. *Durable Actor.* "Carrier A asks for the same slot in the same instant. The dock takes one request at a time, so it can't double-book: T13 gets an offer for three o'clock instead of an error." (T13 at 15:00 with a dashed border; `collision` in the log.)
+3. *Dispatcher.* "The dock announces the offer in the channel and names who holds the slot Carrier A wants." (OFFER line in #pier9; flip to the carrier-a tab if you like: it arrived over Agent Relay.)
+4. *Agents.* "The loser doesn't call us. Its agent goes straight to the winner with cash." (SWAP? $120.)
+5. *Agents.* "A counter, then a deal: $150. Two rounds, and the rules stop them there." (COUNTER / AGREE.)
+6. *Dispatcher + actor.* "The settlement goes to the dock, which swaps the two slots atomically and records the money." (The blocks trade places; side payments $150.)
 
 Outcome line on the panel: read it.
 
-## Scene 2 · Door 5 goes down · about 60 s
+## Scene 2 · Door 5 goes down · about 90 s
 
-Click **2**.
+Click **2**, then **Next step** between beats.
 
-1. *Durable Actor.* "Door 5 just failed. The dock re-plans in one call: only the reefer truck on it moves, to door 6 at eleven, and the offer names who holds the slot it would rather have." (Door 5 striped; T5 slides to door 6 11:00.)
-2. *Agents.* "The cold-chain carrier wants ten o'clock back and offers carrier-b $150 to swap."
-3. *Agents.* "$200, agreed. Two rounds, then silence."
-4. *Durable Actor.* "The dock checks the deal, door type and priority, pins T5 to ten and bumps T9 to eleven." (T5 and T9 swap on door 6; side payments $350.)
+1. *Durable Actor.* "Door 5 just failed. The dock re-plans in one call: only the reefer truck on it moves, to door 6 at eleven." (Door 5 striped; T5 slides to door 6 11:00.)
+2. *Dispatcher.* "The offer to the cold-chain carrier names who holds the ten o'clock it would rather have: Carrier B."
+3. *Agents.* "An hour is worth about $200 to the reefer carrier and $60 to Carrier B. There's a deal in there, and nobody has to find it by phone: $150 offered."
+4. *Agents.* "$200, agreed. Two rounds, then silence."
+5. *Durable Actor.* "The dock checks the deal, door type and priority, pins T5 to ten and bumps T9 to eleven. Both carriers are better off; the warehouse paid nothing." (T5 and T9 swap on door 6; side payments $350; detention avoided +$75 because T5 waits an hour less.)
+
+If asked about the counters: **detention avoided** is the warehouse's number ($75 for every hour a truck's wait got shorter); **side payments** is money moving between carriers, not a cost to anyone in the room.
 
 ## Scene 3 · Traffic, and the clock decides · about 75 s · optional
 
-Click **3**.
+Click **3**, then **Next step** between beats.
 
 1. "Two of carrier-a's trucks are ninety minutes out. The dock re-plans them and door 2 at nine is suddenly free."
 2. "The freed hour goes to auction, closing in a minute: that close is a timer inside the actor."
