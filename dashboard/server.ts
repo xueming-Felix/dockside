@@ -17,7 +17,7 @@ for (const file of [join(import.meta.dir, ".env"), join(import.meta.dir, "../act
 
 const port = Number(process.env.PORT ?? 7110)
 const demoActor = process.env.DEMO_ACTOR || ACTOR_ID
-const demo = new DemoDriver(demoActor, Number(process.env.DEMO_SPEED ?? 60))
+const demo = new DemoDriver(demoActor, Number(process.env.DEMO_SPEED ?? 120)) // 120x: two sim minutes per real second, so the stage's live block (R, 3, 4, the 09:10 alarm) fits in a minute
 const dist = join(import.meta.dir, "dist")
 
 Bun.serve({

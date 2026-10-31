@@ -43,7 +43,7 @@ Expected totals at 12:00 with this seed and the runbook's calls: side payments $
 ## Fallbacks
 
 - An alarm looks late: `tick()` drains every due timer now (the runner should print "waiting for alarm" first and only then fall back).
-- Clock: `freeze()`, `resume()`, `setSpeed(n)` (sim minutes per real minute; 60 is the demo speed, 300 makes a full rehearsal take about a minute).
+- Clock: `freeze()`, `resume()`, `setSpeed(n)` (sim minutes per real minute; 60 is the actor's default, the stage board seeds at 120 through the grant server's `DEMO_SPEED`, 300 makes a full rehearsal take about a minute).
 - Runner not ready: `actor/scripts/scenario.ts` plays all three acts by itself against any actor id; `actor/scripts/drive.ts` plays act 1 and the door-down beat in one go.
 - Something looks wrong on the board: `bun scripts/peek.ts` prints the actor's truth; the board only renders snapshots.
 - Start over: `bun scripts/seed.ts` (any time; the clock restarts at 08:00).

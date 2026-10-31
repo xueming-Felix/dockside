@@ -78,7 +78,7 @@ export class DemoDriver {
   private aborted = false
   // What arrived over Agent Relay's event stream (not the dock mirror): the carrier tabs render this.
   private relayFeed: { id: string; from: string; text: string; thread?: string; mentions: string[]; at: number }[] = []
-  constructor(readonly actorId = ACTOR_ID, readonly speed = 60) {
+  constructor(readonly actorId = ACTOR_ID, readonly speed = 120) { // key mode clock; 120x puts the 09:10 auction alarm 35 s after Reset
     this.dock = actors.Dock.get(actorId)
     void this.connect()
     if (!this.passive) setInterval(() => void this.tickLoop(), 1000)

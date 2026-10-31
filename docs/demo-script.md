@@ -10,7 +10,7 @@ Suggested order (five minutes): open on the Walkthrough, scenario 1 (2 minutes);
 
 ## Setup, five minutes before
 
-Projector: http://100.117.209.6:7110 full screen. The grant server registers the eight agents on Agent Relay at startup (about 90 s); the strip's status line says "Relay: n/8 agents joining" until they are in. Click **Reset** on the Board once before the run: the board snaps to 08:00 at 60x. If you want the live run slow, it also works to press one key, talk, press the next.
+Projector: http://100.117.209.6:7110 full screen. The grant server registers the eight agents on Agent Relay at startup (about 90 s); the strip's status line says "Relay: n/8 agents joining" until they are in. Click **Reset** on the Board once before the run: the board snaps to 08:00 at 120x (two sim minutes per real second; `DEMO_SPEED` on the grant server changes it). If you want the live run slow, it also works to press one key, talk, press the next.
 
 ## Open · 20 s
 

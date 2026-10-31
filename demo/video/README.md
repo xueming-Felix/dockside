@@ -12,7 +12,7 @@ The Devpost cut, built with [HyperFrames](https://hyperframes.heygen.com): one s
 | `assets/beats.json` | sim clock ↔ seconds of `assets/take.mp4` (from the shoot) |
 | `SPEC.md` | the brief: look, motion, shots, banned defaults, QA frames |
 
-The shoot itself lives in the Mac mini scratchpad (`record.mjs`: headless Chrome, CDP screencast → PNG frames; `assemble.mjs`: frames → CFR 30 fps MP4 + `beats.json`). It drives a second grant server (`DEMO_ACTOR=pier9-video PORT=7120 bun run start:cloud` in `dashboard/`) so the stage actor is untouched: Reset → Auto, 08:00 to 12:00 at 60x, 253 s.
+The shoot itself lives in the Mac mini scratchpad (`record.mjs`: headless Chrome, CDP screencast → PNG frames; `assemble.mjs`: frames → CFR 30 fps MP4 + `beats.json`). It drives a second grant server (`DEMO_ACTOR=pier9-video PORT=7120 bun run start:cloud` in `dashboard/`) so the stage actor is untouched: Reset → Auto, 08:00 to 12:00; that take ran at 60x (253 s). The grant server now defaults to 120x, so pass `DEMO_SPEED=60` to reproduce it, or let the EDL be re-timed from `beats.json`.
 
 ## Rebuild
 
