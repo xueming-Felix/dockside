@@ -43,6 +43,10 @@ The owner asked Felix-Claude to take over Person B's branch (`person-b/relay`, p
 
 At 15:48 the owner decided: "go with ours, we took full control and took over. don't need to worry about B." The stage path is the button-driven dashboard against the deployed actor; B's stack stays merged on main but parked. The button path was re-verified on the current deployment at 15:50 (Reset, key 1, key 2 green on a throwaway actor) and the live grant server restarted on the latest code.
 
+## Story mode (16:00 onward)
+
+The owner asked for a simpler demo: one or two key scenarios that show the Durable Actor workflow and multi-round agent conversations, with what happens and why it is good made obvious. The stage driver gained a story mode (default): three scene buttons (two trucks one door; door 5 goes down; optional traffic and the clock decides), each narrated step by step on a panel beside the Gantt with the technology badge, what happened, why it matters and the exact lines exchanged. Story mode seeds at 5x with no arrival checks so scenes can be pressed at any pace; the ten-key board remains at `?keys=1`. All three scenes were verified on a throwaway cloud actor; `docs/demo-script.md` was rewritten for the scenes. The narration panel UI was delegated to a subagent.
+
 ## Open items
 
 Person B's live Relay path (`BUS=relay BRAIN=llm`) is untested and not part of the demo; it needs the Agent Relay workspace key, the OpenAI key and a Devpost team. Person B should read the `[added]` marks in `shared/types.ts` and use `setDoor(5, false)` for the door-down beat. Credentials stay in ignored `.env` files, never in Git. The owner should rotate the Terse API token after the hackathon because it was pasted in chat.

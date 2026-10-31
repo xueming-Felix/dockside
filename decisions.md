@@ -62,3 +62,9 @@
 **User direction:** "go with ours, we took full control and took over. don't need to worry about B." (15:48).
 
 **Assistant choices:** stopped the demo-speed rerun of B's stack, kept the merge on main (nothing of it runs on stage), restarted the live grant server in normal button mode on the latest code, and re-verified Reset plus keys 1 and 2 on a throwaway cloud actor before telling the owner the board was ready. The Devpost text had already been handed over with only the video URL left.
+
+## 2026-10-31 — Simplify the demo into narrated scenes
+
+**User direction:** "it's a bit too complicated now, too many scenarios, we can demo 1-2 key scenarios or exceptions, and we show the workflow of durable objects and agents multi-round conversations … make what happens under each event more obvious, like what happen and what's good about us, and what conversations happen. work in subagents if needed" (15:58).
+
+**Assistant choices and why:** three scenes instead of ten keys, chosen to cover the two things the owner named: scene 1 shows the actor serializing two simultaneous requests and a four-message haggle settled by an atomic swap; scene 2 shows replan on a door failure and a two-round deal pinned by `counter()`; scene 3 (optional) shows the actor's own alarm closing an auction. Each step carries a technology badge, a "what happened" line, a "why it matters" line and the chat lines, served by the driver so the panel and the board stay in sync. Story mode runs the clock at 5x with arrival checks off, because scenes are pressed at the presenter's pace and no gate runs; the key board stays available for the full-day run. The UI was built by a subagent in parallel with the driver.
