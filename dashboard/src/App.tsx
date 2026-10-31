@@ -3,6 +3,7 @@ import {
   ACTOR_ID, DAY_END_MIN, DETENTION_FREE_MIN, hhmm,
   type Appt, type Chat, type Event, type Snapshot, type Timer, type Truck,
 } from "../../shared/types"
+import { Controls } from "./Controls"
 import { useDock, useSimMin } from "./dock"
 
 const pct = (m: number) => `${(Math.max(0, Math.min(DAY_END_MIN, m)) / DAY_END_MIN) * 100}%`
@@ -21,7 +22,13 @@ export function App() {
   const sim = useSimMin(cursor === null ? feed.live : undefined)
   const shownSim = cursor === null ? sim : snap?.simMin ?? 0
 
-  if (!snap || !snap.seeded) return <Empty status={feed.status} error={feed.error} actorId={actorId} />
+  // The strip stays up before the first seed too: "Reset 08:00" is how the presenter seeds the dock from the projector.
+  if (!snap || !snap.seeded) return (
+    <div className="app app-empty">
+      <Empty status={feed.status} error={feed.error} actorId={actorId} />
+      <Controls actorId={actorId} />
+    </div>
+  )
   return (
     <div className="app">
       <header className="top">
@@ -39,6 +46,7 @@ export function App() {
         <section className="panel events-panel"><h2>Dock log <small>alarms highlighted</small></h2><Events events={snap.events} /></section>
       </main>
       <Replay history={history} cursor={cursor} setCursor={setCursor} />
+      <Controls actorId={actorId} />
     </div>
   )
 }
