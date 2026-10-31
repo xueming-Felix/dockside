@@ -56,3 +56,9 @@
 **User direction:** "person-b pushed to a branch, but not might be fully finished. you take over. and wire everything together" (15:12), followed by the OpenAI and Agent Relay keys.
 
 **Assistant choices and why:** merged `person-b/relay` into main keeping Person A's `shared/types.ts` (a superset of the plan's contract that the actor, dashboard and buttons depend on; B's copy was the plan's verbatim text). B's seed relied on MockDock quirks the actor rejects (a reefer truck on a dry door, two appointments per truck), so the runner was pointed at the shared Pier 9 day instead of relaxing the actor. The actor learned B's calling conventions rather than the other way round, because B's dispatcher is generic and the actor was already verified: arrival checks only for flagged trucks when the seed carries `arrivalCheck` flags, past unchecked slots treated as history, `backhaul(truckId)`, `setSpeed(0)` as freeze, `+N` in overrun events. Two dispatcher bugs found on the first live run were fixed in `relay/` (stale pre-seed snapshot freeing every slot; re-opening an auction the actor had already opened). With under 40 minutes to the deadline the live Relay bus and the LLM brain were left untested and the button demo was recommended for the stage. The Devpost draft was corrected to the built system; the video link stays the owner's.
+
+## 2026-10-31 — Demo path: our stack
+
+**User direction:** "go with ours, we took full control and took over. don't need to worry about B." (15:48).
+
+**Assistant choices:** stopped the demo-speed rerun of B's stack, kept the merge on main (nothing of it runs on stage), restarted the live grant server in normal button mode on the latest code, and re-verified Reset plus keys 1 and 2 on a throwaway cloud actor before telling the owner the board was ready. The Devpost text had already been handed over with only the video URL left.
