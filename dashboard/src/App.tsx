@@ -88,16 +88,17 @@ function Counters({ snap }: { snap: Snapshot }) {
   return <div className="counters">{tiles.map(([k, v]) => <div key={k} className="tile"><b>{v}</b><span>{k}</span></div>)}</div>
 }
 
-function blockClass(a: Appt, sim: number): string {
+function blockClass(a: Appt, sim: number, expected: Set<string>): string {
   if (a.status === "done") return "done"
   if (a.status === "noshow") return "noshow"
   if (a.status === "arrived" || a.status === "unloading") return a.arrivedMin !== undefined && sim >= a.arrivedMin + DETENTION_FREE_MIN ? "detention" : "arrived"
-  return sim > a.startMin + 5 ? "late" : "booked"
+  return sim > a.startMin + 5 && expected.has(a.truckId) ? "late" : "booked"
 }
 
 function Gantt({ snap, sim }: { snap: Snapshot; sim: number }) {
   const trucks = useMemo(() => new Map(snap.trucks.map(t => [t.id, t] as const)), [snap.trucks])
   const pending = useMemo(() => new Set(snap.offers.filter(o => o.status === "open").map(o => o.truckId)), [snap.offers])
+  const expected = useMemo(() => new Set(snap.timers.filter(t => t.kind === "arrival_check" && t.truckId).map(t => t.truckId as string)), [snap.timers])
   return (
     <div className="gantt">
       <div className="row head"><div className="door" />
@@ -121,7 +122,7 @@ function Gantt({ snap, sim }: { snap: Snapshot; sim: number }) {
                   <span>{a.status === "open" ? `closes ${hhmm(a.closesMin)}` : "awaits award"}</span>
                 </div>
               ))}
-              {appts.map(a => <Block key={a.truckId} a={a} t={trucks.get(a.truckId)} cls={blockClass(a, sim)} pending={pending.has(a.truckId)} stacked={shared(a.startMin)} />)}
+              {appts.map(a => <Block key={a.truckId} a={a} t={trucks.get(a.truckId)} cls={blockClass(a, sim, expected)} pending={pending.has(a.truckId)} stacked={shared(a.startMin)} />)}
               <i className="now" style={{ left: pct(sim) }} />
             </div>
           </div>

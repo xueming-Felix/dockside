@@ -183,7 +183,16 @@ export async function startDispatcher(dock: DockClient, bus: Bus): Promise<Dispa
   }
 
   async function openAuctionFor(door: number, startMin: number, why: string) {
-    auctionedSlots.add(`${door}@${startMin}`);
+    const key = `${door}@${startMin}`;
+    if (auctionedSlots.has(key)) return;
+    auctionedSlots.add(key);
+    // The Dock actor opens an auction itself when its arrival-check alarm turns a truck into a no-show;
+    // reuse that one instead of opening a second auction on the same slot.
+    const existing = lastSnap?.auctions.find((a) => a.door === door && a.startMin === startMin && a.status !== "awarded");
+    if (existing) {
+      postLater(fmt.auction({ auctionId: existing.id, door, startMin, why, closesMin: existing.closesMin }));
+      return;
+    }
     const closes = Math.round(simNow() + AUCTION_CLOSE_MIN);
     const { auction } = await dock.openAuction(door, startMin, closes);
     postLater(fmt.auction({ auctionId: auction.id, door, startMin, why, closesMin: closes }));

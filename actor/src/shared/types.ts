@@ -124,7 +124,10 @@ export type Snapshot = {
 export type Scenario = {
   doors: Door[]
   trucks: Truck[]
-  appts?: { truckId: string; door: number; startMin: number }[]
+  // arrivalCheck: when any seed appointment carries this flag, only flagged trucks get arrival-check timers
+  // (Person B's runner never calls arrive() for the rest); without flags every booked truck is checked.
+  appts?: { truckId: string; door: number; startMin: number; arrivalCheck?: boolean; status?: string; durationMin?: number }[]
+  arrivalChecks?: "all" | "flagged"
   startMin?: number // sim minute the clock starts at, default 0 (08:00)
   speed?: number // sim minutes per real minute, default 60 (1 real second = 1 sim minute)
 }
@@ -164,10 +167,10 @@ export interface DockApi {
   say(from: string, to: string, text: string, thread?: string): Promise<SayResult>
   snapshot(): Promise<Snapshot>
   // [added] stage controls
-  freeze(): Promise<Snapshot> // key 10: stop the clock
+  freeze(): Promise<Snapshot> // key 10: stop the clock (setSpeed(0) does the same)
   resume(): Promise<Snapshot>
   tick(): Promise<Snapshot> // drain due timers now; manual fallback if an alarm is late
-  backhaul(truckId: string, by: string): Promise<OkResult> // key 9: backhauls++ and an event
+  backhaul(truckId: string, by?: string): Promise<OkResult> // key 9: backhauls++ and an event
 }
 
 // Numbers everyone agreed on before 11:00.

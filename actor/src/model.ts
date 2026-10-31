@@ -10,7 +10,7 @@ import {
 } from "./shared/types.js"
 import type { AuctionResult, ClaimResult, CounterResult, OffersResult, OkResult, RequestResult, SayResult, ThreadResult } from "./shared/types.js"
 
-export type Clock = { realStart: number; speed: number; frozenAtMin: number | null; seeded: boolean }
+export type Clock = { realStart: number; speed: number; frozenAtMin: number | null; seeded: boolean; arrivalChecks?: "all" | "flagged"; flagged?: string[] }
 export type Seq = { event: number; chat: number; offer: number; auction: number; timer: number }
 export type DockState = {
   doors: Door[]; trucks: Truck[]; appts: Appt[]; offers: Offer[]; auctions: Auction[]; threads: Thread[]
@@ -96,6 +96,7 @@ function pruneTimers(d: DockState, now: number) {
 function resetArrivalTimer(d: DockState, a: Appt, now: number) {
   dropTimers(d, t => t.kind === "arrival_check" && t.truckId === a.truckId)
   if (a.status !== "booked") return
+  if (d.clock.arrivalChecks === "flagged" && !(d.clock.flagged ?? []).includes(a.truckId)) return
   const at = a.startMin + ARRIVAL_GRACE_MIN
   addTimer(d, "arrival_check", at > now ? at : now + 10, { truckId: a.truckId })
 }
@@ -319,7 +320,9 @@ export function opSeed(s: DockState, nowMs: number, scenario: Scenario): Op<Snap
   const d = emptyState()
   const speed = scenario.speed ?? DEFAULT_SPEED
   const startMin = scenario.startMin ?? 0
-  d.clock = { realStart: nowMs - (startMin * 60000) / speed, speed, frozenAtMin: null, seeded: true }
+  const flagged = (scenario.appts ?? []).filter(a => a.arrivalCheck).map(a => a.truckId)
+  const arrivalChecks = scenario.arrivalChecks ?? ((scenario.appts ?? []).some(a => a.arrivalCheck !== undefined) ? "flagged" : "all")
+  d.clock = { realStart: nowMs - (startMin * 60000) / speed, speed, frozenAtMin: null, seeded: true, arrivalChecks, flagged }
   d.doors = clone(scenario.doors).sort((a, b) => a.id - b.id)
   d.trucks = clone(scenario.trucks)
   for (const a of scenario.appts ?? []) {
@@ -330,7 +333,7 @@ export function opSeed(s: DockState, nowMs: number, scenario: Scenario): Op<Snap
   replan(d, now, "seed", { seed: true })
   for (const a of d.appts) resetArrivalTimer(d, a, now)
   const booked = d.appts.filter(a => a.status === "booked").length
-  event(d, now, "seed", `Pier 9 seeded: ${d.doors.length} doors, ${d.trucks.length} trucks, ${booked} appointments, clock ${speed}x from ${hhmm(now)}`)
+  event(d, now, "seed", `Pier 9 seeded: ${d.doors.length} doors, ${d.trucks.length} trucks, ${booked} appointments, clock ${speed}x from ${hhmm(now)}${arrivalChecks === "flagged" ? `; arrival checks only for ${flagged.join(", ") || "nobody"}` : ""}`)
   return { state: d, result: snapshot(d, now) }
 }
 
@@ -485,7 +488,7 @@ export function opOverrun(s: DockState, now: number, truckId: string, extraMin: 
   const a = apptOf(d, truckId); const t = truckOf(d, truckId)
   if (!a || !t || !isActive(a)) return { state: d, result: { offers: [] } }
   a.durationMin += extraMin
-  event(d, now, "overrun", `${label(t)} is running ${extraMin} min over at door ${a.door}; slot now ends ${hhmm(a.startMin + a.durationMin)}`, { truckId })
+  event(d, now, "overrun", `${label(t)} overrun +${extraMin} min at door ${a.door}; slot now ends ${hhmm(a.startMin + a.durationMin)}`, { truckId })
   const r = replan(d, now, `${t.id} overran at door ${a.door}`)
   return { state: d, result: { offers: r.offers } }
 }
@@ -641,7 +644,7 @@ export function opSay(s: DockState, now: number, from: string, to: string, text:
   return { state: d, result: { seq: d.seq.chat } }
 }
 
-export function opBackhaul(s: DockState, now: number, truckId: string, by: string): Op<OkResult> {
+export function opBackhaul(s: DockState, now: number, truckId: string, by = "broker"): Op<OkResult> {
   const d = clone(s)
   const t = truckOf(d, truckId)
   if (!t) return { state: d, result: { ok: false, reason: `unknown truck ${truckId}` } }

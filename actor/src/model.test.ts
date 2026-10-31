@@ -267,3 +267,20 @@ describe("vendored contract", () => {
     expect(vendored).toBe(source)
   })
 })
+
+describe("Person B's seed conventions", () => {
+  test("arrivalCheck flags limit arrival checks to the flagged trucks, including after awards", () => {
+    const spec = { ...PIER9, appts: PIER9.appts!.map(a => ({ ...a, arrivalCheck: a.truckId === "T12" })) }
+    let s = M.opSeed(M.emptyState(), T0, spec).state
+    expect(s.timers.filter(t => t.kind === "arrival_check").map(t => t.truckId)).toEqual(["T12"])
+    s = at(210, s) // 11:30: only T12 no-shows; T3 (never arrived) is still booked
+    expect(slot(s, "T12")).toBe("3@11:00:noshow")
+    expect(slot(s, "T3")).toBe("1@08:00:booked")
+    const au = s.auctions.find(a => a.door === 3)!
+    s = M.opBid(s, 211, au.id, "T13", 210).state
+    s = M.opRequest(s, 211, "carrier-a", "T13", 4, 360).state
+    s = M.opAward(at(221, s), 221, au.id, "T13").state
+    expect(s.timers.some(t => t.kind === "arrival_check" && t.truckId === "T13")).toBe(false)
+    expect(M.opBackhaul(s, 222, "T9").result.ok).toBe(true)
+  })
+})

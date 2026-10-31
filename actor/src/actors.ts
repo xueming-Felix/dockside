@@ -152,6 +152,7 @@ export class Dock extends Actor<Meta, Incoming, Snapshot> implements DockApi {
   }
 
   async setSpeed(speed: number): Promise<Snapshot> {
+    if (!(speed > 0)) return await this.freeze() // Person B's runner freezes the clock with setSpeed(0)
     const { state, result } = M.clone(M.opSetSpeed(await this.state(), Date.now(), Math.max(1, Math.min(600, speed))))
     await this.commit(state)
     await this.scheduleNext()
@@ -163,7 +164,7 @@ export class Dock extends Actor<Meta, Incoming, Snapshot> implements DockApi {
     return await this.settle()
   }
 
-  async backhaul(truckId: string, by: string): Promise<OkResult> {
+  async backhaul(truckId: string, by?: string): Promise<OkResult> {
     return this.run(s => M.opBackhaul(s.state, s.now, truckId, by))
   }
 

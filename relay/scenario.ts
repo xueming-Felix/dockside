@@ -36,73 +36,54 @@ import { createBus, type Bus, type BusMsg } from "./bus.js";
 import { startDispatcher, type DispatcherHandle } from "./dispatcher.js";
 import { startAgents, type AgentsHandle, type AgentsOptions } from "./agents.js";
 import { hhmm } from "./clock.js";
+import { PIER9 } from "../shared/pier9.js";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// Seed and keys follow shared/pier9.ts (Person A's seed, the one the deployed actor, the dashboard and the
+// demo script use). The original MockDock seed is in git history (branch person-b/relay). Only T12 carries
+// arrivalCheck: the actor then arms arrival-check alarms for flagged trucks only, since this runner never
+// calls arrive() for the rest. Door-down is door 5 (a reefer door, so reefer T5 is the one displaced).
 export const SEED: SeedSpec = {
-  doors: [
-    { id: 1, type: "dry", open: true }, { id: 2, type: "dry", open: true },
-    { id: 3, type: "dry", open: true }, { id: 4, type: "dry", open: true },
-    { id: 5, type: "reefer", open: true }, { id: 6, type: "reefer", open: true },
-  ],
-  trucks: [
-    { id: "T1", carrier: "carrier-a", load: "L1", type: "dry", priority: 0, etaMin: 0 },
-    { id: "T2", carrier: "carrier-b", load: "L2", type: "dry", priority: 0, etaMin: 0 },
-    { id: "T3", carrier: "broker", load: "L8", type: "dry", priority: 0, etaMin: 0 },
-    { id: "T4", carrier: "carrier-a", load: "L4", type: "dry", priority: 0, etaMin: 0 },
-    { id: "T5", carrier: "carrier-c", load: "L5", type: "reefer", priority: 0, etaMin: 0 },
-    { id: "T6", carrier: "carrier-b", load: "L6", type: "dry", priority: 0, etaMin: 0 },
-    { id: "T7", carrier: "broker", load: "L7", type: "dry", priority: 0, etaMin: 0 },
-    { id: "T8", carrier: "carrier-d", load: "L9", type: "dry", priority: 0, etaMin: 0, hosLimitMin: 450 },
-    { id: "T9", carrier: "carrier-b", load: "L10", type: "reefer", priority: 0, etaMin: 0 },
-    { id: "T10", carrier: "carrier-c", load: "L11", type: "reefer", priority: 0, etaMin: 0 },
-    { id: "T11", carrier: "shipper", load: "L17", type: "dry", priority: 0, etaMin: 0 },
-    { id: "T12", carrier: "carrier-b", load: "L12", type: "dry", priority: 0, etaMin: 0 },
-  ],
-  appts: [
-    { truckId: "T4", door: 1, startMin: 120, status: "booked", arrivalCheck: true },
-    { truckId: "T1", door: 2, startMin: 60, status: "booked", arrivalCheck: true },
-    { truckId: "T2", door: 2, startMin: 120, status: "booked", arrivalCheck: true },
-    { truckId: "T3", door: 3, startMin: 0, status: "booked" },          // arrives at key 2 before any check
-    { truckId: "T5", door: 3, startMin: 480, status: "booked" },        // deviation 2: reefer on dry door
-    { truckId: "T12", door: 4, startMin: 150, status: "booked", arrivalCheck: true }, // deviation 4
-    { truckId: "T7", door: 4, startMin: 180, status: "booked" },
-    { truckId: "T2", door: 4, startMin: 240, status: "booked" },
-    { truckId: "T9", door: 5, startMin: 180, status: "arrived" },
-    { truckId: "T9", door: 5, startMin: 360, status: "booked" },
-    { truckId: "T10", door: 5, startMin: 480, status: "booked" },
-  ],
+  doors: PIER9.doors,
+  trucks: PIER9.trucks,
+  appts: PIER9.appts!.map((a) => ({ ...a, status: "booked" as const, durationMin: 60, arrivalCheck: a.truckId === "T12" })),
 };
 
 export type KeyDef = { key: string; simMin: number; describe: string; run: (c: Ctx) => Promise<void> };
 type Ctx = { disp: DispatcherHandle; agents: AgentsHandle; dock: DockClient };
 
 export const KEYS: KeyDef[] = [
-  { key: "1", simMin: 5, describe: "two request()s for door 4 at 14:00 same tick (B then A)",
+  { key: "1", simMin: 5, describe: "two request()s for door 4 at 14:00 same tick (carrier-b books, carrier-a collides and swaps for cash)",
     run: async (c) => {
-      await c.disp.inject.request("carrier-b", "T2", 4, 360);
-      await c.disp.inject.request("carrier-a", "T4", 4, 360);
+      await c.disp.inject.request("carrier-b", "T14", 4, 360);
+      await c.disp.inject.request("carrier-a", "T13", 4, 360);
     } },
-  { key: "2", simMin: 30, describe: "arrive(T3) — the detention clock starts quietly",
+  { key: "2", simMin: 28, describe: "arrive(T3) — the detention clock starts quietly (fires 10:28)",
     run: (c) => c.disp.inject.arrive("T3") },
-  { key: "3", simMin: 60, describe: "reportEta(T1,+90) and reportEta(T4,+90) — traffic; two slots free",
+  { key: "3", simMin: 60, describe: "reportEta(T1, 10:30) and reportEta(T4, 11:30) — traffic; door 2 09:00 and door 1 10:00 go to auction",
     run: async (c) => {
       await c.disp.inject.reportEta("T1", 150);
-      await c.disp.inject.reportEta("T4", 150);
+      await c.disp.inject.reportEta("T4", 210);
     } },
-  { key: "4", simMin: 80, describe: "setDoor(3, closed) — the reefer truck is displaced",
-    run: (c) => c.disp.inject.setDoor(3, false) },
+  { key: "4", simMin: 80, describe: "setDoor(5, closed) — reefer T5 is displaced; it wants door 6 10:00, held by carrier-b's T9",
+    run: (c) => c.disp.inject.setDoor(5, false) },
   { key: "5", simMin: 100, describe: "carrier-x requests door 2 at 11:00 for load L12 (vetting)",
     run: async (c) => { c.agents.poke("carrier-x"); } },
-  { key: "6", simMin: 110, describe: "overrun(T6, +45) — paperwork at the door; the queue slides",
-    run: (c) => c.disp.inject.overrun("T6", 45) },
-  { key: "7", simMin: 135, describe: "prioritize(T11) — the shipper's hot load L17",
+  { key: "6", simMin: 110, describe: "overrun(+75) for whoever holds door 2 09:00 — paperwork at the door; the truck behind slides",
+    run: async (c) => {
+      const s = await c.disp.snapshot();
+      const at = s.appts.find((a) => a.door === 2 && a.startMin === 60 && a.status !== "noshow" && a.status !== "done")
+        ?? s.appts.find((a) => a.status === "unloading" || a.status === "arrived");
+      await c.disp.inject.overrun(at?.truckId ?? "T6", 75);
+    } },
+  { key: "7", simMin: 135, describe: "prioritize(T11) — the shipper's hot load L17 takes 11:00; the broker's T7 is bumped",
     run: (c) => c.disp.inject.prioritize("T11") },
-  // [alarm] 10:30 — T3 detention fires on its own; [alarm] 11:00 — T12 arrival check.
-  { key: "8", simMin: 200, describe: "reportEta(T8, 15:00) — the slot would end past 15:30 (deviation 7)",
+  // [alarm] 10:28 — T3 detention fires on its own; [alarm] 11:30 — T12's arrival check: no-show, auction.
+  { key: "8", simMin: 200, describe: "reportEta(T8, 15:00) — its slot would end past 15:30: tomorrow",
     run: (c) => c.disp.inject.reportEta("T8", 420) },
-  { key: "9", simMin: 220, describe: "done(T9) — door 5 frees up; the broker smells a backhaul",
+  { key: "9", simMin: 220, describe: "done(T9) — door 6 frees up; the broker smells a backhaul",
     run: (c) => c.disp.inject.done("T9") },
   { key: "0", simMin: 240, describe: "key 10 — freeze the clock, print counters",
     run: async (c) => {
@@ -155,7 +136,8 @@ export async function runScenario(opts: RunOpts = {}): Promise<{ transcript: str
   });
 
   const ctx: Ctx = { disp, agents, dock };
-  await disp.inject.seed({ ...SEED, speed });
+  // the actor's speed unit is sim minutes per real MINUTE; this runner's is per real second
+  await disp.inject.seed({ ...SEED, speed: speed * 60 });
   log(`seeded Pier 9 — 6 doors, 12 trucks, clock at ${speed} sim-min/real-s`);
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -167,7 +149,7 @@ export async function runScenario(opts: RunOpts = {}): Promise<{ transcript: str
     }
   };
 
-  const alarmAt = new Set([150, 180]);
+  const alarmAt = new Set([148, 210]);
   const press = async (k: KeyDef) => {
     log(`\n--- [key ${k.key}] ${hhmm(k.simMin)} — ${k.describe}`);
     if (alarmAt.has(k.simMin)) log(`    (waiting for alarm at ${hhmm(k.simMin)})`);

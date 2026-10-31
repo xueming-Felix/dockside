@@ -35,14 +35,15 @@ export class DemoDriver {
   private stopped = false
   private log: string[] = []
 
+  readonly passive = !!process.env.DEMO_PASSIVE // Person B's dispatcher is driving: no chatter, no awards, no gate
   constructor(readonly actorId = ACTOR_ID, readonly speed = 60) {
     this.dock = actors.Dock.get(actorId)
     void this.connect()
-    setInterval(() => void this.tickLoop(), 1000)
+    if (!this.passive) setInterval(() => void this.tickLoop(), 1000)
   }
 
   state() {
-    return { actorId: this.actorId, speed: this.speed, auto: this.auto, running: this.running, simMin: this.simNow(), seeded: this.snap?.seeded ?? false, keys: this.keys, log: this.log.slice(-12) }
+    return { actorId: this.actorId, speed: this.speed, auto: this.auto, running: this.running, passive: this.passive, simMin: this.simNow(), seeded: this.snap?.seeded ?? false, keys: this.keys, log: this.log.slice(-12) }
   }
 
   private say(from: string, to: string, text: string, thread?: string) { return this.dock.say(from, to, text, thread) }
@@ -88,6 +89,7 @@ export class DemoDriver {
 
   /** The dispatcher's alarm work. */
   private async onEvent(ev: Event, s: Snapshot): Promise<void> {
+    if (this.passive) return
     if (ev.kind === "auction_closed" && ev.auctionId) {
       const au = s.auctions.find(a => a.id === ev.auctionId)
       if (!au || au.status !== "closed" || au.bids.length === 0) return
@@ -192,6 +194,7 @@ export class DemoDriver {
     if (!key) return { ok: false, reason: `no key ${n}` }
     if (this.running !== null) return { ok: false, reason: `key ${this.running} is still running` }
     if (!this.snap?.seeded) return { ok: false, reason: "press Reset first: the dock is not seeded" }
+    if (this.passive) return { ok: false, reason: "passive mode: Person B's dispatcher and agents are driving this run" }
     this.running = n
     key.status = "running"
     key.note = undefined
