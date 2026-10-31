@@ -16,3 +16,14 @@ A warehouse's dock is a [Durable Actor](https://github.com/TerseAI/durable-actor
 | `dashboard/` | Person A | Vite + React page on the actor's websocket: Gantt, chatter feed, clock, counters |
 | `relay/` | Person B | dispatcher, persona agents on the Relay SDK, scenario runner, `MockDock` / `TerseDock` |
 | `docs/` | both | this plan, diagrams, pitch |
+
+## Workspace records
+
+This repository is also the project record for `dockside` in Xueming's personal agent workspace.
+
+- [Current understanding](brief.md), [decisions](decisions.md) and [agent instructions](AGENTS.md).
+- `journal/` holds immutable source records; the [original request](journal/2026-10/cap_baf32724-7d80-4539-baf0-64d272450b90.md) is the linked copy of the Personal Workspace capture.
+- Lark project group: **Dockside** (`oc_7ace179430b101be62241f34b1b98de1`), topic mode. Start a topic there to work on Dockside with the workspace agents; the originating Personal Workspace topic keeps its own binding.
+- Local checkout on the Mac mini: `/Users/xuemingxu/workspace/projects/dockside`.
+
+Keep the Terse token, the Agent Relay workspace key and the OpenAI key in ignored `.env` files, never in Git.
