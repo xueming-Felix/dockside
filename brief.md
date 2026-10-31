@@ -57,7 +57,7 @@ The owner found the scenes too fast to follow and asked for step-by-step beats; 
 
 ## Two views (18:00 onward)
 
-The owner settled the demo shape: view 1 is the v1 live board (ten triggers, dock log, conversations, moves; Relay posting stays on), view 2 is a static step-by-step Walkthrough of scenarios 1 and 2 that shows what the actor publishes and what the agents' inboxes look like, for illustration only. The live server was put back in ten-key mode; the walkthrough content (`dashboard/src/walkthrough.data.ts`: per step the narration, the actor's calls/events/broadcasts, a mini board, the chat bubbles) was written and the rendering delegated to a subagent (`Walkthrough.tsx`, a header tab). Story mode remains in the driver behind `DEMO_MODE=story`.
+The owner settled the demo shape: view 1 is the v1 live board (ten triggers, dock log, conversations, moves; Relay posting stays on), view 2 is a static step-by-step Walkthrough of scenarios 1 and 2 that shows what the actor publishes and what the agents' inboxes look like, for illustration only. The live server was put back in ten-key mode; the walkthrough content (`dashboard/src/walkthrough.data.ts`: per step the narration, the actor's calls/events/broadcasts, a mini board, the chat bubbles) was written and the rendering landed at 18:35 (`dashboard/src/Walkthrough.tsx`, header tab `#walkthrough`): a setting screen with the cast table, a background card per scenario (stakes, who is in it, what is about to happen), the steps with three panes (actor log and mini board; the two agents' inboxes as Relay chats; narration), and an outcome card. The owner was shown the screenshots. Story mode remains in the driver behind `DEMO_MODE=story`.
 
 ## Open items
 
