@@ -3,7 +3,7 @@
 **Dock appointments that re-plan themselves, agent to agent**
 
 Video: <VIDEO_URL>
-Repo: <REPO_URL>
+Repo: https://github.com/xueming-Felix/dockside
 
 ## Inspiration
 
@@ -19,7 +19,7 @@ Eight companies are represented by agents on Agent Relay: four carriers, a broke
 
 A dashboard on the projector shows the doors as a Gantt chart, the full agent chatter, the sim clock with the next timers, and counters for detention avoided, side payments, moves, backhauls, and phone calls (always zero).
 
-The demo is three acts driven by ten keys. On stage: eight agents, five negotiations, three auctions, four alarms firing on their own, nine exceptions, zero prompts typed.
+The demo is three acts driven by ten buttons on the dashboard itself; the presenter clicks to break things and the board reacts. On stage: eight agents, five negotiations, three auctions, six alarms firing on their own, ten exceptions, zero prompts typed.
 
 ## How we built it
 
@@ -28,15 +28,15 @@ Three parts, one shared types file between them.
 - **The Dock actor** (Durable Actors on Terse). One actor holds the whole warehouse-day: doors, trucks, appointments, offers, auctions, threads, claims, chatter, events. It replans, validates every settlement, and runs every timer. It never talks to Relay.
 - **The dispatcher** (Bun, Agent Relay SDK). The bridge. It calls the actor through the generated client, watches the actor's websocket for new events, and does all Relay sends and receives. It posts OFFER, AUCTION, and VERIFY lines to `#pier9`, mirrors every message into the actor with `say()`, and acts on only a handful of line types.
 - **Eight persona agents** (Agent Relay SDK, OpenAI gpt-5-mini). Each is registered on Relay and answers through a persona prompt with structured output. Hard rules live in code, not in the prompt: budgets are checked before the model is asked, two messages per agent per thread, and only the agent that made the last concession posts the SETTLE.
-- **The dashboard** (React). One page, rendered straight from the actor's snapshot over a websocket. Hosted on Freestyle (if deployed).
+- **The dashboard** (Vite + React, a Bun grant server). One page on the projector, rendered straight from the actor's snapshot over a websocket: Gantt, chatter feed, clock with the next alarms, counters, a replay slider, and the ten stage buttons. The grant server also hosts the stage driver that plays the dispatcher's part when the Relay agents are not running.
 
-The replan is kept simple on purpose. Trucks already at the door never move. The rest are ordered by priority, then ETA, and each gets the earliest open hour slot on a door of the right type, preferring its current door. Every changed appointment becomes an offer to its carrier.
+The replan is kept simple on purpose. Trucks already at the door never move, and a truck keeps any slot that still works, so unaffected trucks never churn. Hot loads and counter-offers preempt; displaced trucks fill gaps by priority, then ETA, on the earliest open hour slot of the right door type. Every changed appointment becomes an offer to its carrier. 24 unit tests cover the three acts; a scenario script replays the whole day against the deployed actor and checks that every alarm fires by itself.
 
 ## How it answers the rubric
 
 ### Where the actor serializes
 
-There is one Dock actor, `pier9:2026-10-31`, for the whole warehouse-day. It handles one request at a time. That makes double-booking impossible: when two carriers ask for door 4 at 14:00 in the same instant, one books and the other gets an offer for 15:00. It also decides between agents. Every SETTLE is validated by calling the actor in order (`swap`, then `pay`, then `resolveClaim`). If two agents settle conflicting deals in the same second, one is accepted and the other gets `REJECTED` with the actor's reason. `swap()` is atomic: the second of two conflicting swaps fails.
+There is one Dock actor, `pier9-2026-10-31`, for the whole warehouse-day. It handles one request at a time. That makes double-booking impossible: when two carriers ask for door 4 at 14:00 in the same instant, one books and the other gets an offer for 15:00. It also decides between agents. Every SETTLE is validated by calling the actor in order (`swap`, then `pay`, then `resolveClaim`). If two agents settle conflicting deals in the same second, one is accepted and the other gets `REJECTED` with the actor's reason. `swap()` is atomic: the second of two conflicting swaps fails.
 
 ### Where alarms fire
 
@@ -47,7 +47,7 @@ The actor has one alarm and a timer table behind it. Setting the alarm again rep
 - `auction_close`: ends an auction; the dispatcher awards the slot.
 - `thread_deadline`: ends a negotiation that went quiet; the dispatcher accepts the standing offer.
 
-These fire while nobody is connected. In the demo, the auction close, the thread deadline, the detention claim, and the no-show all happen with no key pressed.
+These fire while nobody is connected: we seeded a test actor on Terse Cloud, disconnected everything, and came back to find it had woken itself five times on schedule. In the demo, three auction closes, the thread deadline, the detention claim, and the no-show all happen with no button pressed, each within about 100 ms of its due sim minute.
 
 ### Where agents message each other
 
@@ -63,17 +63,17 @@ The dispatcher only listens. It mirrors every line and acts on just six: `SETTLE
 
 ### Which parts use both
 
-- **Auctions:** agents bid over Relay; an `auction_close` alarm in the actor ends the auction; the actor awards the slot.
+- **Auctions:** agents bid over Relay; an `auction_close` alarm in the actor ends the auction; the dispatcher reads the bids and the actor records the award.
 - **Negotiation threads:** agents bargain over Relay; the actor holds a `thread_deadline` timer for each thread, so if the agents don't agree, the clock decides.
 - **The coalition and the detention alarm:** the agents agree to a detention waiver in a thread; later the `detention` alarm fires on its own, the claim is filed, and the waiver from the deal applies.
-- **The no-show:** an `arrival_check` alarm releases the slot, and the dispatcher opens a new auction for the agents.
+- **The no-show:** an `arrival_check` alarm releases the slot and opens the auction itself, so the agents can bid even if the dispatcher is asleep.
 - **Every settlement:** agents agree on Relay; the actor serializes and validates the result.
 
 ## Challenges
 
 - **One alarm per actor.** Terse gives each actor one alarm, and setting it again replaces it. We needed four kinds of timers, so the actor keeps a timer table and always arms the alarm for the earliest one.
 - **One actor or many.** Door-down and hot-load replans cross doors, and actor-to-actor calls aren't documented. We chose one actor for the whole warehouse-day, which keeps "one scarce shared thing, one request at a time."
-- **Persisted state.** In-place array changes don't save, so every collection is reassigned on change.
+- **Persisted state and strict JSON.** In-place array changes don't save, so every collection is reassigned on change; results and broadcasts must be strict JSON, and every method on the actor must be async, private helpers included.
 - **Agents that stall.** Language models can talk forever. We capped each agent at two messages per thread, enforced budgets in code, and gave every thread a 10 sim-minute deadline in the actor.
 - **Keeping the actor clean.** The actor knows nothing about Relay. The dispatcher is the only bridge, so the actor stays state, replan, and alarms.
 
@@ -81,15 +81,15 @@ The dispatcher only listens. It mirrors every line and acts on just six: `SETTLE
 
 - The agents negotiate with each other, not through us. The dispatcher only listens and acts on the outcome.
 - The actor is the referee. Conflicting settlements can't both land.
-- Four alarms fire on their own during the demo, and the room can watch each one on the clock panel before it fires.
-- The whole run is eight agents, five negotiations, three auctions, four alarms firing on their own, nine exceptions, zero prompts typed.
+- Six alarms fire on their own during the demo, and the room can watch each one count down on the clock panel before it fires.
+- The whole run is eight agents, five negotiations, three auctions, six alarms firing on their own, ten exceptions, zero prompts typed.
 
 ## What we learned
 
 - A single serialized actor is a simple answer to double-booking. No locks, no transactions to reason about.
 - One alarm plus a timer table is enough for a day full of clocks.
 - Agent negotiation needs hard limits in code. Prompts set the personality; code sets the budget, the message count, and the deadline.
-- Splitting the work at one frozen types file, with a mock actor on one side, let two people build in parallel without blocking each other.
+- Splitting the work at one frozen types file, with a mock actor on one side, let two people build in parallel without blocking each other; the two halves met on the deployed actor in the last hour.
 
 ## What's next
 
@@ -102,4 +102,4 @@ We built the receiver's dock. The broker's desk is next. Every scarce thing in f
 - OpenAI gpt-5-mini
 - Bun
 - React
-- Freestyle (if deployed)
+- Vite
