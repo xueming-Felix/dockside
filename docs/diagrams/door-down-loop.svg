@@ -1,0 +1,56 @@
+<svg viewBox="0 0 720 470" role="img" aria-label="Sequence across four lanes: dispatcher, Dock actor, reefer agent over Relay, dashboard. The dispatcher calls setDoor(3, closed). The actor replans, moving reefer truck T5 to door 6 at 16:00, broadcasts a snapshot to the dashboard, and returns offer o21. The dispatcher sends the offer to the reefer agent over Relay. The agent counters for door 5 at 14:00. The dispatcher calls counter(o21, 5, 360) and say(). The actor pins T5, bumps dry truck T2 to door 1 at 15:00, returns ok plus offer o22, and broadcasts again. The dispatcher repeats for o22." xmlns="http://www.w3.org/2000/svg" width="720" height="470"><style>svg { font-family: 'Source Sans 3', 'Segoe UI', Helvetica, Arial, sans-serif; background: #FFFFFF }
+.n rect { fill: #FFFFFF; stroke: #B4AB9F; stroke-width: 1; }
+.n text { fill: #1F1B16; font-size: 13px; }
+.n .sub { fill: #6B635A; font-size: 11.5px; }
+.n.a rect { fill: #E3ECF5; stroke: #2F5F8F; }
+.n.a .tt { fill: #2F5F8F; font-weight: 600; }
+.n.b rect { fill: #FDE8DF; stroke: #C2410C; }
+.n.b .tt { fill: #C2410C; font-weight: 600; }
+.n.both rect { fill: #ECEAFB; stroke: #5B4FCF; }
+.n.both .tt { fill: #5B4FCF; font-weight: 600; }
+.n.warn rect { fill: #FBEBD2; stroke: #B7640A; }
+.n.warn .tt { fill: #B7640A; font-weight: 600; }
+.n.plain .tt { font-weight: 600; }
+.n.col-a rect { fill: none; stroke: #2F5F8F; stroke-dasharray: 4 4; }
+.n.col-b rect { fill: none; stroke: #C2410C; stroke-dasharray: 4 4; }
+.n.lunch rect { fill: #EEEAE3; stroke: #E0DBD3; }
+.e { stroke: #B4AB9F; fill: none; stroke-width: 1.3; }
+.e.relay { stroke: #C2410C; stroke-dasharray: 5 4; }
+.life { stroke: #E0DBD3; stroke-width: 1; stroke-dasharray: 3 4; }
+.sync { stroke: #B7640A; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.lbl { fill: #6B635A; font-size: 11.5px; }
+.lbl.relay { fill: #C2410C; }
+.lbl.warn { fill: #B7640A; font-weight: 600; }
+.hd { fill: #6B635A; font-size: 11.5px; font-family: "Archivo", "Helvetica Neue", Arial, sans-serif; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.m-arr { fill: #B4AB9F; }
+.m-relay { fill: #C2410C; }</style>
+<defs>
+<marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-arr" d="M1 1L9 5L1 9z"/></marker>
+<marker id="r2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-relay" d="M1 1L9 5L1 9z"/></marker>
+</defs>
+<g class="n b"><rect x="30" y="10" width="160" height="40" rx="6"/><text class="tt" x="110" y="35" text-anchor="middle">Dispatcher · B</text></g>
+<g class="n a"><rect x="220" y="10" width="160" height="40" rx="6"/><text class="tt" x="300" y="35" text-anchor="middle">Dock actor · A</text></g>
+<g class="n b"><rect x="410" y="10" width="160" height="40" rx="6"/><text class="tt" x="490" y="35" text-anchor="middle">Reefer agent · B</text></g>
+<g class="n a"><rect x="600" y="10" width="100" height="40" rx="6"/><text class="tt" x="650" y="35" text-anchor="middle">Dashboard</text></g>
+<line class="life" x1="110" y1="50" x2="110" y2="460"/><line class="life" x1="300" y1="50" x2="300" y2="460"/><line class="life" x1="490" y1="50" x2="490" y2="460"/><line class="life" x1="650" y1="50" x2="650" y2="460"/>
+<line class="e" x1="110" y1="90" x2="296" y2="90" marker-end="url(#a2)"/>
+<text class="lbl" x="205" y="82" text-anchor="middle">setDoor(3, closed)</text>
+<g class="n a"><rect x="192" y="106" width="216" height="24" rx="4"/><text class="sub" x="300" y="122" text-anchor="middle">replan: T5 (reefer) → door 6, 16:00</text></g>
+<line class="e" x1="300" y1="156" x2="646" y2="156" marker-end="url(#a2)"/>
+<text class="lbl" x="473" y="148" text-anchor="middle">broadcast snapshot (Gantt block slides, turns amber)</text>
+<line class="e" x1="300" y1="188" x2="114" y2="188" marker-end="url(#a2)"/>
+<text class="lbl" x="205" y="180" text-anchor="middle">{ offers: [o21] }</text>
+<line class="e relay" x1="110" y1="226" x2="486" y2="226" marker-end="url(#r2)"/>
+<text class="lbl relay" x="300" y="218" text-anchor="middle">Relay DM: OFFER o21 truck T5 door 6 at 16:00 — door 3 out of service</text>
+<g class="n b"><rect x="400" y="242" width="180" height="24" rx="4"/><text class="sub" x="490" y="258" text-anchor="middle">persona: reefer, 8s timeout</text></g>
+<line class="e relay" x1="490" y1="292" x2="114" y2="292" marker-end="url(#r2)"/>
+<text class="lbl relay" x="300" y="284" text-anchor="middle">Relay: counter o21 door 5 at 14:00 — we're reefer, 5 is open</text>
+<line class="e" x1="110" y1="326" x2="296" y2="326" marker-end="url(#a2)"/>
+<text class="lbl" x="205" y="318" text-anchor="middle">say(…) · counter(o21, 5, 360)</text>
+<g class="n a"><rect x="182" y="342" width="236" height="24" rx="4"/><text class="sub" x="300" y="358" text-anchor="middle">pin T5 → bump T2 (dry) to door 1, 15:00</text></g>
+<line class="e" x1="300" y1="392" x2="114" y2="392" marker-end="url(#a2)"/>
+<text class="lbl" x="205" y="384" text-anchor="middle">{ ok, offers: [o22 for T2] }</text>
+<line class="e" x1="300" y1="420" x2="646" y2="420" marker-end="url(#a2)"/>
+<text class="lbl" x="473" y="412" text-anchor="middle">broadcast snapshot + chatter</text>
+<text class="lbl" x="110" y="450" text-anchor="middle">repeat for o22 → Carrier B</text>
+</svg>

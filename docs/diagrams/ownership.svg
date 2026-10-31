@@ -1,0 +1,51 @@
+<svg viewBox="0 0 720 380" role="img" aria-label="Two columns. Person A owns the Dock actor on Terse Cloud and the dashboard; the actor broadcasts snapshots to the dashboard over a websocket. Person B owns the dispatcher, the persona agents and the scenario runner; the dispatcher calls the actor through the generated client and receives its websocket events, and talks to the persona agents over Agent Relay. A shared types file, frozen at 11:20, sits between the columns." xmlns="http://www.w3.org/2000/svg" width="720" height="380"><style>svg { font-family: 'Source Sans 3', 'Segoe UI', Helvetica, Arial, sans-serif; background: #FFFFFF }
+.n rect { fill: #FFFFFF; stroke: #B4AB9F; stroke-width: 1; }
+.n text { fill: #1F1B16; font-size: 13px; }
+.n .sub { fill: #6B635A; font-size: 11.5px; }
+.n.a rect { fill: #E3ECF5; stroke: #2F5F8F; }
+.n.a .tt { fill: #2F5F8F; font-weight: 600; }
+.n.b rect { fill: #FDE8DF; stroke: #C2410C; }
+.n.b .tt { fill: #C2410C; font-weight: 600; }
+.n.both rect { fill: #ECEAFB; stroke: #5B4FCF; }
+.n.both .tt { fill: #5B4FCF; font-weight: 600; }
+.n.warn rect { fill: #FBEBD2; stroke: #B7640A; }
+.n.warn .tt { fill: #B7640A; font-weight: 600; }
+.n.plain .tt { font-weight: 600; }
+.n.col-a rect { fill: none; stroke: #2F5F8F; stroke-dasharray: 4 4; }
+.n.col-b rect { fill: none; stroke: #C2410C; stroke-dasharray: 4 4; }
+.n.lunch rect { fill: #EEEAE3; stroke: #E0DBD3; }
+.e { stroke: #B4AB9F; fill: none; stroke-width: 1.3; }
+.e.relay { stroke: #C2410C; stroke-dasharray: 5 4; }
+.life { stroke: #E0DBD3; stroke-width: 1; stroke-dasharray: 3 4; }
+.sync { stroke: #B7640A; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.lbl { fill: #6B635A; font-size: 11.5px; }
+.lbl.relay { fill: #C2410C; }
+.lbl.warn { fill: #B7640A; font-weight: 600; }
+.hd { fill: #6B635A; font-size: 11.5px; font-family: "Archivo", "Helvetica Neue", Arial, sans-serif; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.m-arr { fill: #B4AB9F; }
+.m-relay { fill: #C2410C; }</style>
+<defs>
+<marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-arr" d="M1 1L9 5L1 9z"/></marker>
+<marker id="r1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-relay" d="M1 1L9 5L1 9z"/></marker>
+</defs>
+<text class="hd" x="30" y="28">Person A · actor &amp; board · laptop 1</text>
+<text class="hd" x="390" y="28">Person B · relay &amp; cast · laptop 2</text>
+<g class="n col-a"><rect x="20" y="38" width="320" height="272" rx="8"/></g>
+<g class="n col-b"><rect x="380" y="38" width="320" height="272" rx="8"/></g>
+<g class="n a"><rect x="40" y="58" width="280" height="72" rx="6"/><text class="tt" x="180" y="80" text-anchor="middle">Dock actor · Terse Cloud</text><text class="sub" x="180" y="98" text-anchor="middle">doors · trucks · appts · offers · claims · timers</text><text class="sub" x="180" y="116" text-anchor="middle">replan() · onAlarm() · broadcast()</text></g>
+<g class="n a"><rect x="40" y="230" width="280" height="60" rx="6"/><text class="tt" x="180" y="252" text-anchor="middle">Dashboard · Vite + React</text><text class="sub" x="180" y="270" text-anchor="middle">Gantt · chatter · clock · counters · replay</text></g>
+<line class="e" x1="180" y1="130" x2="180" y2="228" marker-end="url(#a1)"/>
+<text class="lbl" x="190" y="170">websocket</text><text class="lbl" x="190" y="186">snapshot on every change</text>
+<g class="n b"><rect x="400" y="58" width="280" height="72" rx="6"/><text class="tt" x="540" y="80" text-anchor="middle">Dispatcher · Node</text><text class="sub" x="540" y="98" text-anchor="middle">calls actor · watches events · posts offers and auctions</text><text class="sub" x="540" y="116" text-anchor="middle">acts on SETTLE · BID · VERIFY · mirrors chatter</text></g>
+<g class="n b"><rect x="400" y="160" width="280" height="52" rx="6"/><text class="tt" x="540" y="180" text-anchor="middle">Eight persona agents · Node</text><text class="sub" x="540" y="198" text-anchor="middle">Relay SDK · gpt-5-mini · bargain with each other in #pier9</text></g>
+<g class="n b"><rect x="400" y="238" width="280" height="52" rx="6"/><text class="tt" x="540" y="258" text-anchor="middle">Scenario runner · keypress injector</text><text class="sub" x="540" y="276" text-anchor="middle">three acts, keys 1 to 10</text></g>
+<line class="e relay" x1="540" y1="130" x2="540" y2="158" marker-end="url(#r1)" marker-start="url(#r1)"/>
+<text class="lbl relay" x="550" y="148">Agent Relay</text>
+<line class="e" x1="540" y1="238" x2="540" y2="214" marker-end="url(#a1)"/>
+<text class="lbl" x="550" y="230">inject</text>
+<line class="e" x1="398" y1="82" x2="322" y2="82" marker-end="url(#a1)"/>
+<text class="lbl" x="360" y="76" text-anchor="middle">calls</text>
+<line class="e" x1="320" y1="108" x2="398" y2="108" marker-end="url(#a1)"/>
+<text class="lbl" x="360" y="122" text-anchor="middle">events</text>
+<g class="n warn"><rect x="170" y="326" width="380" height="40" rx="6"/><text class="tt" x="360" y="343" text-anchor="middle">shared/types.ts · frozen at 11:20</text><text class="sub" x="360" y="359" text-anchor="middle">Snapshot, Event, Offer, the method list, the message grammar</text></g>
+</svg>

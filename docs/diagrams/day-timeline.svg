@@ -1,0 +1,54 @@
+<svg viewBox="0 0 720 300" role="img" aria-label="Timeline from 10:00 to 17:00 with three lanes. Person A: setup, contract, actor core, alarms and deploy, lunch, dashboard, integration, README and Freestyle, final run, judging. Person B: setup, contract, Relay spike, dispatcher on mock, personas, lunch, scenario runner and end-to-end, integration, backup video, Devpost, judging. Sync points at 11:20 contract frozen, 12:30 actor deployed, 14:30 first full run, 16:00 submit." xmlns="http://www.w3.org/2000/svg" width="720" height="300"><style>svg { font-family: 'Source Sans 3', 'Segoe UI', Helvetica, Arial, sans-serif; background: #FFFFFF }
+.n rect { fill: #FFFFFF; stroke: #B4AB9F; stroke-width: 1; }
+.n text { fill: #1F1B16; font-size: 13px; }
+.n .sub { fill: #6B635A; font-size: 11.5px; }
+.n.a rect { fill: #E3ECF5; stroke: #2F5F8F; }
+.n.a .tt { fill: #2F5F8F; font-weight: 600; }
+.n.b rect { fill: #FDE8DF; stroke: #C2410C; }
+.n.b .tt { fill: #C2410C; font-weight: 600; }
+.n.both rect { fill: #ECEAFB; stroke: #5B4FCF; }
+.n.both .tt { fill: #5B4FCF; font-weight: 600; }
+.n.warn rect { fill: #FBEBD2; stroke: #B7640A; }
+.n.warn .tt { fill: #B7640A; font-weight: 600; }
+.n.plain .tt { font-weight: 600; }
+.n.col-a rect { fill: none; stroke: #2F5F8F; stroke-dasharray: 4 4; }
+.n.col-b rect { fill: none; stroke: #C2410C; stroke-dasharray: 4 4; }
+.n.lunch rect { fill: #EEEAE3; stroke: #E0DBD3; }
+.e { stroke: #B4AB9F; fill: none; stroke-width: 1.3; }
+.e.relay { stroke: #C2410C; stroke-dasharray: 5 4; }
+.life { stroke: #E0DBD3; stroke-width: 1; stroke-dasharray: 3 4; }
+.sync { stroke: #B7640A; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.lbl { fill: #6B635A; font-size: 11.5px; }
+.lbl.relay { fill: #C2410C; }
+.lbl.warn { fill: #B7640A; font-weight: 600; }
+.hd { fill: #6B635A; font-size: 11.5px; font-family: "Archivo", "Helvetica Neue", Arial, sans-serif; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.m-arr { fill: #B4AB9F; }
+.m-relay { fill: #C2410C; }</style>
+<text class="hd" x="50" y="24">11:00</text><text class="hd" x="155" y="24">12:00</text><text class="hd" x="260" y="24">13:00</text><text class="hd" x="365" y="24">14:00</text><text class="hd" x="470" y="24">15:00</text><text class="hd" x="575" y="24">16:00</text><text class="hd" x="680" y="24" text-anchor="end">17:00</text>
+<text class="hd" x="20" y="72">A</text><text class="hd" x="20" y="152">B</text>
+<g class="n both"><rect x="50" y="44" width="35" height="44" rx="4"/></g>
+<g class="n a"><rect x="85" y="44" width="122" height="44" rx="4"/><text class="tt" x="146" y="62" text-anchor="middle">actor core</text><text class="sub" x="146" y="78" text-anchor="middle">state · replan</text></g>
+<g class="n a"><rect x="207" y="44" width="53" height="44" rx="4"/><text class="tt" x="233" y="62" text-anchor="middle">alarms</text><text class="sub" x="233" y="78" text-anchor="middle">deploy</text></g>
+<g class="n lunch"><rect x="260" y="44" width="35" height="44" rx="4"/></g>
+<g class="n a"><rect x="295" y="44" width="122" height="44" rx="4"/><text class="tt" x="356" y="62" text-anchor="middle">dashboard</text><text class="sub" x="356" y="78" text-anchor="middle">Gantt · feed · clock</text></g>
+<g class="n both"><rect x="417" y="44" width="79" height="44" rx="4"/><text class="tt" x="456" y="62" text-anchor="middle">integrate</text><text class="sub" x="456" y="78" text-anchor="middle">3 full runs</text></g>
+<g class="n a"><rect x="496" y="44" width="35" height="44" rx="4"/><text class="sub" x="513" y="70" text-anchor="middle">docs</text></g>
+<g class="n a"><rect x="531" y="44" width="44" height="44" rx="4"/><text class="sub" x="553" y="70" text-anchor="middle">final</text></g>
+<g class="n both"><rect x="575" y="44" width="105" height="44" rx="4"/><text class="tt" x="627" y="62" text-anchor="middle">judging</text><text class="sub" x="627" y="78" text-anchor="middle">A narrates</text></g>
+<g class="n both"><rect x="50" y="124" width="35" height="44" rx="4"/></g>
+<g class="n b"><rect x="85" y="124" width="52" height="44" rx="4"/><text class="tt" x="111" y="142" text-anchor="middle">Relay</text><text class="sub" x="111" y="158" text-anchor="middle">spike</text></g>
+<g class="n b"><rect x="137" y="124" width="70" height="44" rx="4"/><text class="tt" x="172" y="142" text-anchor="middle">dispatcher</text><text class="sub" x="172" y="158" text-anchor="middle">vs mock</text></g>
+<g class="n b"><rect x="207" y="124" width="53" height="44" rx="4"/><text class="tt" x="233" y="142" text-anchor="middle">agents</text><text class="sub" x="233" y="158" text-anchor="middle">personas</text></g>
+<g class="n lunch"><rect x="260" y="124" width="35" height="44" rx="4"/></g>
+<g class="n b"><rect x="295" y="124" width="122" height="44" rx="4"/><text class="tt" x="356" y="142" text-anchor="middle">scenario runner</text><text class="sub" x="356" y="158" text-anchor="middle">end to end</text></g>
+<g class="n both"><rect x="417" y="124" width="79" height="44" rx="4"/><text class="tt" x="456" y="142" text-anchor="middle">integrate</text><text class="sub" x="456" y="158" text-anchor="middle">tune timing</text></g>
+<g class="n b"><rect x="496" y="124" width="35" height="44" rx="4"/><text class="sub" x="513" y="150" text-anchor="middle">video</text></g>
+<g class="n b"><rect x="531" y="124" width="44" height="44" rx="4"/><text class="sub" x="553" y="150" text-anchor="middle">submit</text></g>
+<g class="n both"><rect x="575" y="124" width="105" height="44" rx="4"/><text class="tt" x="627" y="142" text-anchor="middle">judging</text><text class="sub" x="627" y="158" text-anchor="middle">B drives</text></g>
+<line class="sync" x1="85" y1="36" x2="85" y2="200"/><text class="lbl warn" x="85" y="216" text-anchor="middle">11:20 contract</text><text class="lbl warn" x="85" y="230" text-anchor="middle">frozen</text>
+<line class="sync" x1="207" y1="36" x2="207" y2="200"/><text class="lbl warn" x="207" y="216" text-anchor="middle">12:30 actor</text><text class="lbl warn" x="207" y="230" text-anchor="middle">deployed</text>
+<line class="sync" x1="417" y1="36" x2="417" y2="200"/><text class="lbl warn" x="417" y="216" text-anchor="middle">14:30 first</text><text class="lbl warn" x="417" y="230" text-anchor="middle">full run</text>
+<line class="sync" x1="575" y1="36" x2="575" y2="200"/><text class="lbl warn" x="575" y="216" text-anchor="middle">16:00</text><text class="lbl warn" x="575" y="230" text-anchor="middle">submit</text>
+<text class="lbl" x="277" y="260" text-anchor="middle">13:00 lunch, 20 min, at the desk</text>
+<text class="lbl" x="20" y="286">Blue = A alone · coral = B alone · purple = both at one screen · gray = lunch</text>
+</svg>

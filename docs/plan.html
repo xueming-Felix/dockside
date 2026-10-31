@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dockside Build Plan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: a run sheet, not an essay. Checklists and tables first, prose only where a decision needs a reason. Person A is steel blue, Person B is coral; the contract between them is the one thing in amber. */
+:root {
+  --bg: #F6F4F0; --surface: #FFFFFF; --fg: #1F1B16; --muted: #6B635A;
+  --line: #E0DBD3; --line-strong: #B4AB9F;
+  --a: #2F5F8F; --a-bg: #E3ECF5;
+  --b: #C2410C; --b-bg: #FDE8DF;
+  --both: #5B4FCF; --both-bg: #ECEAFB;
+  --warn: #B7640A; --warn-bg: #FBEBD2;
+  --ok: #0E7C6B; --ok-bg: #E2F3EF;
+  --code-bg: #EEEAE3;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141210; --surface: #1C1916; --fg: #EEE9E2; --muted: #A69D92;
+  --line: #2E2924; --line-strong: #5E544A;
+  --a: #7FB0E0; --a-bg: #14283B;
+  --b: #F3906C; --b-bg: #3F2117;
+  --both: #A69BFF; --both-bg: #2A2650;
+  --warn: #F2B35A; --warn-bg: #3D2A10;
+  --ok: #3FBFA8; --ok-bg: #113B35;
+  --code-bg: #262119; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #141210; --surface: #1C1916; --fg: #EEE9E2; --muted: #A69D92;
+  --line: #2E2924; --line-strong: #5E544A;
+  --a: #7FB0E0; --a-bg: #14283B;
+  --b: #F3906C; --b-bg: #3F2117;
+  --both: #A69BFF; --both-bg: #2A2650;
+  --warn: #F2B35A; --warn-bg: #3D2A10;
+  --ok: #3FBFA8; --ok-bg: #113B35;
+  --code-bg: #262119; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16.5px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; }
+main { max-width: 820px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(36px, 6.5vw, 52px); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 25px; font-weight: 600; margin-top: 52px; margin-bottom: 10px; }
+h3 { font-size: 17.5px; font-weight: 600; margin-top: 22px; margin-bottom: 6px; }
+p { margin: 0 0 12px; max-width: 70ch; }
+ul, ol { margin: 0 0 12px; padding-left: 22px; max-width: 70ch; }
+li { margin-bottom: 5px; }
+code { font-family: var(--font-mono); font-size: 0.85em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+pre { font-family: var(--font-mono); font-size: 13px; line-height: 1.5; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 10px 0 18px; }
+pre code { background: none; padding: 0; font-size: inherit; }
+.eyebrow { font-family: var(--font-display); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 36px 0 12px; max-width: none; }
+.lede { font-size: 20px; line-height: 1.45; max-width: 62ch; margin: 16px 0 6px; }
+.who { display: inline-block; font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; vertical-align: middle; margin-right: 6px; }
+.who.a { background: var(--a-bg); color: var(--a); } .who.b { background: var(--b-bg); color: var(--b); } .who.both { background: var(--both-bg); color: var(--both); } .who.warn { background: var(--warn-bg); color: var(--warn); }
+.rule { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin: 12px 0 18px; }
+.col { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.col.a { border-color: var(--a); } .col.b { border-color: var(--b); } .col.both { border-color: var(--both); }
+.col h3 { margin-top: 0; }
+.col ul, .col ol, .col p { font-size: 15px; max-width: none; }
+.col ul { padding-left: 18px; margin-bottom: 0; }
+.check { list-style: none; padding: 0; max-width: none; }
+.check li { position: relative; padding: 5px 0 5px 28px; border-top: 1px solid var(--line); }
+.check li::before { content: ""; position: absolute; left: 2px; top: 10px; width: 14px; height: 14px; border: 1.5px solid var(--line-strong); border-radius: 3px; }
+figure { margin: 18px 0 24px; }
+.dg { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.dg svg { display: block; min-width: 640px; width: 100%; height: auto; font-family: var(--font-body); }
+figcaption { font-size: 14px; color: var(--muted); margin-top: 8px; max-width: 72ch; }
+.n rect { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1; }
+.n text { fill: var(--fg); font-size: 13px; }
+.n .sub { fill: var(--muted); font-size: 11.5px; }
+.n.a rect { fill: var(--a-bg); stroke: var(--a); } .n.a .tt { fill: var(--a); font-weight: 600; }
+.n.b rect { fill: var(--b-bg); stroke: var(--b); } .n.b .tt { fill: var(--b); font-weight: 600; }
+.n.both rect { fill: var(--both-bg); stroke: var(--both); } .n.both .tt { fill: var(--both); font-weight: 600; }
+.n.warn rect { fill: var(--warn-bg); stroke: var(--warn); } .n.warn .tt { fill: var(--warn); font-weight: 600; }
+.n.plain .tt { font-weight: 600; }
+.n.col-a rect { fill: none; stroke: var(--a); stroke-dasharray: 4 4; } .n.col-b rect { fill: none; stroke: var(--b); stroke-dasharray: 4 4; }
+.n.lunch rect { fill: var(--code-bg); stroke: var(--line); }
+.e { stroke: var(--line-strong); fill: none; stroke-width: 1.3; }
+.e.relay { stroke: var(--b); stroke-dasharray: 5 4; }
+.life { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 4; }
+.sync { stroke: var(--warn); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.lbl { fill: var(--muted); font-size: 11.5px; }
+.lbl.relay { fill: var(--b); } .lbl.warn { fill: var(--warn); font-weight: 600; }
+.hd { fill: var(--muted); font-size: 11.5px; font-family: var(--font-display); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.m-arr { fill: var(--line-strong); } .m-relay { fill: var(--b); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; margin: 10px 0 18px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--font-display); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.t { white-space: nowrap; font-family: var(--font-mono); font-size: 13px; }
+.tw { overflow-x: auto; }
+.callout { border-left: 3px solid var(--warn); padding: 6px 0 6px 16px; margin: 18px 0; max-width: 70ch; }
+.callout.ok { border-color: var(--ok); }
+.steps { counter-reset: s; list-style: none; padding: 0; max-width: 74ch; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 40px 1fr; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.steps li::before { content: counter(s); font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--muted); line-height: 1.1; }
+.steps b { display: block; font-family: var(--font-display); font-weight: 600; }
+.steps small { color: var(--muted); }
+.say { font-family: var(--font-voice, Georgia), Georgia, serif; font-style: italic; }
+footer { margin-top: 52px; font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<main>
+<p class="eyebrow">Haunted Hacks · Sat Oct 31, 2026 · hacking 11:00 to 4:00 · two people</p>
+<h1>Dockside Build Plan</h1>
+<p class="lede">One actor, one dispatcher, eight scripted agents, one dashboard. Person A owns the state and the screen; Person B owns the messaging and the show. They meet at one frozen file.</p>
+<p><span class="who a">Person A</span> actor &amp; board &nbsp; <span class="who b">Person B</span> relay &amp; cast &nbsp; <span class="who both">Both</span> contract, integration, pitch</p>
+
+<h2>Before 11:00 · setup only, no project code</h2>
+<p>The rules allow installing, signing in, and running vendor quickstarts. Do all of it before hacking starts so 11:00 is a clean start.</p>
+<div class="cols">
+<div class="col a"><h3><span class="who a">A</span>Laptop 1</h3>
+<ul class="check">
+<li>Bun 1.4.2+, Node 22+, <code>bunx terse-cli@latest install</code>, <code>terse auth login</code></li>
+<li>Run the Terse counter quickstart end to end once, including <code>terse deploy</code>, so the deploy path is known</li>
+<li>Create an API token in app.useterse.ai; keep it in a password manager</li>
+<li>Create the GitHub repo <code>dockside</code> with folders <code>actor/</code> <code>dashboard/</code> <code>relay/</code> <code>shared/</code> and an empty README</li>
+<li>Vite + React scaffold knowledge ready (you'll scaffold at 1:20, not now)</li>
+</ul></div>
+<div class="col b"><h3><span class="who b">B</span>Laptop 2</h3>
+<ul class="check">
+<li>Agent Relay desktop app installed and signed in; find the workspace key for the SDK (agentrelay.com/docs/typescript-sdk)</li>
+<li><code>npm view @agent-relay/sdk</code> and skim its README; note <code>register</code>, <code>sendMessage</code>, <code>addListener('message.created')</code></li>
+<li>OpenAI key from the $100 credits in <code>OPENAI_API_KEY</code>; confirm <code>gpt-5-mini</code> answers</li>
+<li>Devpost account created; team formed on Devpost</li>
+<li>Screen-recording tool tested (QuickTime or OBS) with mic</li>
+</ul></div>
+</div>
+<div class="callout">Agree out loud before 11:00: the warehouse is <b>Pier 9 Cold Storage</b>, six doors (1 to 4 dry, 5 and 6 reefer), the day runs 08:00 to 18:00, the clock runs at 60x, detention is $75 an hour after two free hours. Everything downstream uses those numbers.</div>
+
+<h2>Five decisions · agreed by the team, 09:06</h2>
+<p><span class="who" style="background: var(--ok-bg); color: var(--ok)">Agreed</span> All five are settled. Nobody reopens them during the day; if one turns out wrong, it goes on the cut list, not back into discussion.</p>
+<ol class="steps">
+<li><span><b>One actor for the whole warehouse-day, not one per door. <span class="who" style="background: var(--ok-bg); color: var(--ok)">Agreed</span></b>Door-down and hot-load replans cross doors, and actor-to-actor calls aren't documented. The actor id is <code>pier9:2026-10-31</code>. Still "one scarce shared thing, one request at a time."</span></li>
+<li><span><b>The actor never talks to Relay. <span class="who" style="background: var(--ok-bg); color: var(--ok)">Agreed</span></b>A dispatcher process (B) is the bridge: it calls the actor through the generated client, watches the actor's websocket for new events, and does all Relay sends and receives. The actor stays pure state + replan + alarms, which is what the Durable Actors judges want to see.</span></li>
+<li><span><b>Agents are Node processes on the Relay SDK, personas driven by gpt-5-mini. <span class="who" style="background: var(--ok-bg); color: var(--ok)">Agreed</span></b>Eight agents in one process, each registered with <code>relay.workspace.register</code>, each answering offers through a persona prompt with structured output. Fast, deterministic, no terminals. Upgrade path: one real Claude Code session (desktop-registered) plays Carrier A if the 11:00 spike proves it can see the SDK agents.</span></li>
+<li><span><b>Simulated clock inside the actor, one alarm, a timer table behind it. <span class="who" style="background: var(--ok-bg); color: var(--ok)">Agreed</span></b>Terse gives one alarm per actor and "setting it again replaces it", so the actor keeps a <code>timers</code> list, always sets the alarm to the earliest unfired timer, and drains due timers in <code>onAlarm</code>. 1 real second = 1 sim minute.</span></li>
+<li><span><b>Person B codes against a mock actor until 12:30. <span class="who" style="background: var(--ok-bg); color: var(--ok)">Agreed</span></b><code>relay/dock.ts</code> declares a <code>DockClient</code> interface with two implementations: <code>MockDock</code> (in-memory, same signatures) and <code>TerseDock</code> (wraps the generated client). B is never blocked on A, and A is never interrupted by B.</span></li>
+<li><span><b>Agents negotiate with each other, not through the dispatcher. <span class="who" style="background: var(--ok-bg); color: var(--ok)">Added 09:10</span></b>Every offer opens a thread in <code>#pier9</code>. Agents swap, bid, bargain and vouch in that thread directly, agent to agent. The dispatcher only mirrors the chatter and acts on four line types: <code>SETTLE</code>, <code>BID</code>, <code>VERIFY</code>, and the plain <code>accept / counter / decline</code>. The actor validates every settlement, so two agents who settle conflicting deals in the same second get one accepted and one <code>REJECTED</code>. Each thread has a deadline timer in the actor: if the agents don't agree, the clock decides.</span></li>
+</ol>
+
+<h2>Who owns what</h2>
+<figure>
+<div class="dg">
+<svg viewBox="0 0 720 380" role="img" aria-label="Two columns. Person A owns the Dock actor on Terse Cloud and the dashboard; the actor broadcasts snapshots to the dashboard over a websocket. Person B owns the dispatcher, the persona agents and the scenario runner; the dispatcher calls the actor through the generated client and receives its websocket events, and talks to the persona agents over Agent Relay. A shared types file, frozen at 11:20, sits between the columns.">
+<defs>
+<marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-arr" d="M1 1L9 5L1 9z"/></marker>
+<marker id="r1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-relay" d="M1 1L9 5L1 9z"/></marker>
+</defs>
+<text class="hd" x="30" y="28">Person A · actor &amp; board · laptop 1</text>
+<text class="hd" x="390" y="28">Person B · relay &amp; cast · laptop 2</text>
+<g class="n col-a"><rect x="20" y="38" width="320" height="272" rx="8"/></g>
+<g class="n col-b"><rect x="380" y="38" width="320" height="272" rx="8"/></g>
+<g class="n a"><rect x="40" y="58" width="280" height="72" rx="6"/><text class="tt" x="180" y="80" text-anchor="middle">Dock actor · Terse Cloud</text><text class="sub" x="180" y="98" text-anchor="middle">doors · trucks · appts · offers · claims · timers</text><text class="sub" x="180" y="116" text-anchor="middle">replan() · onAlarm() · broadcast()</text></g>
+<g class="n a"><rect x="40" y="230" width="280" height="60" rx="6"/><text class="tt" x="180" y="252" text-anchor="middle">Dashboard · Vite + React</text><text class="sub" x="180" y="270" text-anchor="middle">Gantt · chatter · clock · counters · replay</text></g>
+<line class="e" x1="180" y1="130" x2="180" y2="228" marker-end="url(#a1)"/>
+<text class="lbl" x="190" y="170">websocket</text><text class="lbl" x="190" y="186">snapshot on every change</text>
+<g class="n b"><rect x="400" y="58" width="280" height="72" rx="6"/><text class="tt" x="540" y="80" text-anchor="middle">Dispatcher · Node</text><text class="sub" x="540" y="98" text-anchor="middle">calls actor · watches events · posts offers and auctions</text><text class="sub" x="540" y="116" text-anchor="middle">acts on SETTLE · BID · VERIFY · mirrors chatter</text></g>
+<g class="n b"><rect x="400" y="160" width="280" height="52" rx="6"/><text class="tt" x="540" y="180" text-anchor="middle">Eight persona agents · Node</text><text class="sub" x="540" y="198" text-anchor="middle">Relay SDK · gpt-5-mini · bargain with each other in #pier9</text></g>
+<g class="n b"><rect x="400" y="238" width="280" height="52" rx="6"/><text class="tt" x="540" y="258" text-anchor="middle">Scenario runner · keypress injector</text><text class="sub" x="540" y="276" text-anchor="middle">three acts, keys 1 to 10</text></g>
+<line class="e relay" x1="540" y1="130" x2="540" y2="158" marker-end="url(#r1)" marker-start="url(#r1)"/>
+<text class="lbl relay" x="550" y="148">Agent Relay</text>
+<line class="e" x1="540" y1="238" x2="540" y2="214" marker-end="url(#a1)"/>
+<text class="lbl" x="550" y="230">inject</text>
+<line class="e" x1="398" y1="82" x2="322" y2="82" marker-end="url(#a1)"/>
+<text class="lbl" x="360" y="76" text-anchor="middle">calls</text>
+<line class="e" x1="320" y1="108" x2="398" y2="108" marker-end="url(#a1)"/>
+<text class="lbl" x="360" y="122" text-anchor="middle">events</text>
+<g class="n warn"><rect x="170" y="326" width="380" height="40" rx="6"/><text class="tt" x="360" y="343" text-anchor="middle">shared/types.ts · frozen at 11:20</text><text class="sub" x="360" y="359" text-anchor="middle">Snapshot, Event, Offer, the method list, the message grammar</text></g>
+</svg>
+</div>
+<figcaption>Each person commits only inside their own folders. The only file both touch is <code>shared/types.ts</code>, and after 11:20 it changes only by saying so across the table.</figcaption>
+</figure>
+
+<h2>The contract · type this in together at 11:00</h2>
+<p>Sim minutes count from 08:00 (<code>0</code> = 08:00, <code>360</code> = 14:00). Slots are 60 minutes. Relay handles are the carriers' agent names.</p>
+<pre><code>// shared/types.ts
+export type DoorType = "dry" | "reefer"
+export type Door  = { id: number; type: DoorType; open: boolean }
+export type Truck = { id: string; carrier: string; load: string; type: DoorType;
+                     priority: 0 | 1 | 2; etaMin: number; hosLimitMin?: number }
+export type Appt  = { truckId: string; door: number; startMin: number;
+                     status: "booked" | "arrived" | "unloading" | "done" | "noshow" | "tomorrow" }
+export type Offer = { id: string; truckId: string; carrier: string; door: number; startMin: number;
+                     reason: string; status: "open" | "accepted" | "countered" | "declined" | "expired" }
+export type Claim = { truckId: string; carrier: string; minutes: number; amount: number;
+                     status: "filed" | "approved" | "waived" }
+export type Auction = { id: string; door: number; startMin: number; closesMin: number;
+                       bids: { truckId: string; readyMin: number }[]; winner?: string }
+export type Thread  = { id: string; offerId: string; deadlineMin: number;
+                       status: "open" | "settled" | "expired" }
+export type Chat  = { seq: number; atMin: number; from: string; to: string; thread?: string; text: string }
+export type Event = { seq: number; atMin: number; kind:
+  "collision" | "replanned" | "offer" | "noshow" | "detention" | "tomorrow" | "empty" | "hot" |
+  "swap" | "overrun" | "auction_open" | "auction_closed" | "thread_expired" | "refused";
+  truckId?: string; offerId?: string; auctionId?: string; threadId?: string; detail: string }
+export type Snapshot = { simMin: number; speed: number; doors: Door[]; trucks: Truck[];
+  appts: Appt[]; offers: Offer[]; auctions: Auction[]; threads: Thread[]; claims: Claim[];
+  chatter: Chat[]; events: Event[];
+  counters: { detentionAvoidedUsd: number; sidePaymentsUsd: number; phoneCalls: 0;
+              moves: number; backhauls: number } }</code></pre>
+
+<h3>Actor methods <span class="who a">A implements</span> <span class="who b">B calls</span></h3>
+<div class="tw"><table>
+<tr><th>Method</th><th>What it does</th><th>Returns</th></tr>
+<tr><td><code>seed(scenario)</code></td><td>Resets state, loads doors and trucks, sets <code>realStart</code>, schedules arrival-check timers</td><td><code>Snapshot</code></td></tr>
+<tr><td><code>request(carrier, truckId, door, startMin)</code></td><td>Books if free; if taken, returns an <code>Offer</code> for the earliest feasible slot and emits a <code>collision</code> event</td><td><code>{ appt?, offer? }</code></td></tr>
+<tr><td><code>reportEta(truckId, etaMin)</code></td><td>Runs <code>replan()</code>; every moved appointment becomes an open <code>Offer</code> to its carrier</td><td><code>{ offers }</code></td></tr>
+<tr><td><code>setDoor(door, open)</code></td><td>Same, after closing or reopening a door</td><td><code>{ offers }</code></td></tr>
+<tr><td><code>prioritize(truckId)</code></td><td>Sets priority 2, replans, emits <code>hot</code>; offers to the bumped carriers carry <code>reason: "yield for hot load"</code></td><td><code>{ offers }</code></td></tr>
+<tr><td><code>accept(offerId)</code></td><td>Commits the appointment</td><td><code>{ ok }</code></td></tr>
+<tr><td><code>counter(offerId, door, startMin)</code></td><td>Pins that truck to the requested slot if feasible by bumping lower-priority trucks (which become new offers); else rejects with a reason</td><td><code>{ ok, reason?, offers }</code></td></tr>
+<tr><td><code>decline(offerId)</code></td><td>Truck goes to the queue; replan</td><td><code>{ offers }</code></td></tr>
+<tr><td><code>swap(truckA, truckB)</code> <span class="who b">new</span></td><td>Exchanges the two appointments if both are movable and door types fit. Atomic: the second of two conflicting swaps fails. Emits <code>swap</code></td><td><code>{ ok, reason? }</code></td></tr>
+<tr><td><code>overrun(truckId, extraMin)</code> <span class="who b">new</span></td><td>Truck at the door runs long; its slot stretches; replan everything behind it</td><td><code>{ offers }</code></td></tr>
+<tr><td><code>openAuction(door, startMin, closesMin)</code> · <code>bid(auctionId, truckId, readyMin)</code> · <code>award(auctionId, truckId)</code> <span class="who b">new</span></td><td>A freed slot goes to auction; the <code>auction_close</code> timer emits <code>auction_closed</code>; the dispatcher picks the winner (earliest ready, then priority) and awards</td><td><code>{ auction }</code></td></tr>
+<tr><td><code>openThread(threadId, offerId, deadlineMin)</code> · <code>settleThread(threadId)</code> <span class="who b">new</span></td><td>Tracks a negotiation; the <code>thread_deadline</code> timer emits <code>thread_expired</code> and the dispatcher auto-accepts the standing offer</td><td><code>{ thread }</code></td></tr>
+<tr><td><code>pay(from, to, usd)</code> <span class="who b">new</span></td><td>Records a side payment agreed in a settlement; <code>sidePaymentsUsd</code> counter</td><td><code>{ ok }</code></td></tr>
+<tr><td><code>arrive(truckId)</code> · <code>done(truckId)</code></td><td>Starts the detention timer · frees the door, emits <code>empty</code></td><td><code>{ ok }</code></td></tr>
+<tr><td><code>fileClaim(truckId)</code> · <code>resolveClaim(truckId, "approved" | "waived")</code></td><td>Detention money</td><td><code>{ claim }</code></td></tr>
+<tr><td><code>say(from, to, text)</code></td><td>Mirrors a Relay message into <code>chatter</code> so the dashboard shows it</td><td><code>{ seq }</code></td></tr>
+<tr><td><code>snapshot()</code></td><td>Full state; also sent on <code>onConnect</code> and broadcast after every mutation and every alarm</td><td><code>Snapshot</code></td></tr>
+</table></div>
+
+<h3>Relay message grammar <span class="who b">B owns</span></h3>
+<p>Everything happens in <code>#pier9</code>, one thread per offer or auction, so the dispatcher and the dashboard see every word. The first token of a line is the verb; the dispatcher parses with one regex per verb and ignores anything else. The free text after the dash is what the chatter feed shows.</p>
+<pre><code># dispatcher → #pier9 (opens a thread; names who holds what the carrier wants)
+OFFER o21 truck T5 door 6 at 16:00 — door 3 out of service. Holder of door 5 14:00: @carrier-b (T9). Thread closes 09:30.
+AUCTION a3 door 2 at 09:00 — slot freed by T1 breakdown. Closes 09:10. BID a3 &lt;truck&gt; ready &lt;HH:MM&gt;
+VERIFY @carrier-x load L12? — unknown carrier requesting door 2 at 11:00          # asked of the broker
+
+# agent → agent, inside the thread (the dispatcher only mirrors these)
+SWAP? @carrier-b — T5 takes door 5 14:00, T9 takes door 6 16:00, we cover $150 of your detention.
+COUNTER $200 — 16:00 pushes my driver's next pickup.
+AGREE $200 — cold chain is worth it.
+
+# agent → dispatcher (the only lines the dispatcher acts on)
+SETTLE o21: T5 door 5 14:00 · T9 door 6 16:00 · pay carrier-c→carrier-b $200
+BID a3 T6 ready 08:50
+VERIFY no — L12 is tendered to @carrier-b, nobody else.
+accept o21 | counter o21 door 5 at 14:00 | decline o21
+REJECTED o21 — door 5 14:00 was taken by a2 award (dispatcher, after the actor says no)</code></pre>
+<p>Rules that keep it from stalling: two messages per agent per thread, then silence; every thread has a 10 sim-minute deadline in the actor; the dispatcher validates a <code>SETTLE</code> by calling the actor in order (<code>swap</code>, then <code>pay</code>, then <code>resolveClaim</code>) and posts <code>REJECTED</code> with the actor's reason if any step fails. Every line in both directions is mirrored with <code>say()</code> by the dispatcher, never by the agents.</p>
+
+<h2>One exception through the loop · the door goes down</h2>
+<figure>
+<div class="dg">
+<svg viewBox="0 0 720 470" role="img" aria-label="Sequence across four lanes: dispatcher, Dock actor, reefer agent over Relay, dashboard. The dispatcher calls setDoor(3, closed). The actor replans, moving reefer truck T5 to door 6 at 16:00, broadcasts a snapshot to the dashboard, and returns offer o21. The dispatcher sends the offer to the reefer agent over Relay. The agent counters for door 5 at 14:00. The dispatcher calls counter(o21, 5, 360) and say(). The actor pins T5, bumps dry truck T2 to door 1 at 15:00, returns ok plus offer o22, and broadcasts again. The dispatcher repeats for o22.">
+<defs>
+<marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-arr" d="M1 1L9 5L1 9z"/></marker>
+<marker id="r2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-relay" d="M1 1L9 5L1 9z"/></marker>
+</defs>
+<g class="n b"><rect x="30" y="10" width="160" height="40" rx="6"/><text class="tt" x="110" y="35" text-anchor="middle">Dispatcher · B</text></g>
+<g class="n a"><rect x="220" y="10" width="160" height="40" rx="6"/><text class="tt" x="300" y="35" text-anchor="middle">Dock actor · A</text></g>
+<g class="n b"><rect x="410" y="10" width="160" height="40" rx="6"/><text class="tt" x="490" y="35" text-anchor="middle">Reefer agent · B</text></g>
+<g class="n a"><rect x="600" y="10" width="100" height="40" rx="6"/><text class="tt" x="650" y="35" text-anchor="middle">Dashboard</text></g>
+<line class="life" x1="110" y1="50" x2="110" y2="460"/><line class="life" x1="300" y1="50" x2="300" y2="460"/><line class="life" x1="490" y1="50" x2="490" y2="460"/><line class="life" x1="650" y1="50" x2="650" y2="460"/>
+<line class="e" x1="110" y1="90" x2="296" y2="90" marker-end="url(#a2)"/>
+<text class="lbl" x="205" y="82" text-anchor="middle">setDoor(3, closed)</text>
+<g class="n a"><rect x="192" y="106" width="216" height="24" rx="4"/><text class="sub" x="300" y="122" text-anchor="middle">replan: T5 (reefer) → door 6, 16:00</text></g>
+<line class="e" x1="300" y1="156" x2="646" y2="156" marker-end="url(#a2)"/>
+<text class="lbl" x="473" y="148" text-anchor="middle">broadcast snapshot (Gantt block slides, turns amber)</text>
+<line class="e" x1="300" y1="188" x2="114" y2="188" marker-end="url(#a2)"/>
+<text class="lbl" x="205" y="180" text-anchor="middle">{ offers: [o21] }</text>
+<line class="e relay" x1="110" y1="226" x2="486" y2="226" marker-end="url(#r2)"/>
+<text class="lbl relay" x="300" y="218" text-anchor="middle">Relay DM: OFFER o21 truck T5 door 6 at 16:00 — door 3 out of service</text>
+<g class="n b"><rect x="400" y="242" width="180" height="24" rx="4"/><text class="sub" x="490" y="258" text-anchor="middle">persona: reefer, 8s timeout</text></g>
+<line class="e relay" x1="490" y1="292" x2="114" y2="292" marker-end="url(#r2)"/>
+<text class="lbl relay" x="300" y="284" text-anchor="middle">Relay: counter o21 door 5 at 14:00 — we're reefer, 5 is open</text>
+<line class="e" x1="110" y1="326" x2="296" y2="326" marker-end="url(#a2)"/>
+<text class="lbl" x="205" y="318" text-anchor="middle">say(…) · counter(o21, 5, 360)</text>
+<g class="n a"><rect x="182" y="342" width="236" height="24" rx="4"/><text class="sub" x="300" y="358" text-anchor="middle">pin T5 → bump T2 (dry) to door 1, 15:00</text></g>
+<line class="e" x1="300" y1="392" x2="114" y2="392" marker-end="url(#a2)"/>
+<text class="lbl" x="205" y="384" text-anchor="middle">{ ok, offers: [o22 for T2] }</text>
+<line class="e" x1="300" y1="420" x2="646" y2="420" marker-end="url(#a2)"/>
+<text class="lbl" x="473" y="412" text-anchor="middle">broadcast snapshot + chatter</text>
+<text class="lbl" x="110" y="450" text-anchor="middle">repeat for o22 → Carrier B</text>
+</svg>
+</div>
+<figcaption>Every exception is this same loop. The scenario runner injects the first call; everything after it is the dispatcher reacting to return values and websocket events. Nothing in the actor knows Relay exists.</figcaption>
+</figure>
+
+<h2>Three ways agents talk to each other</h2>
+<p>The loop above is the base case: one agent, one offer, one reply. The demo gets its drama from three patterns layered on top of it, all in <code>#pier9</code> threads, all settled through the actor.</p>
+<figure>
+<div class="dg">
+<svg viewBox="0 0 720 300" role="img" aria-label="Three patterns side by side. Swap: two carrier agents exchange SWAP, COUNTER and AGREE messages directly, then one posts SETTLE and the Dock actor runs swap() atomically. Auction: the dispatcher posts a freed slot to the channel, three carriers bid, an auction_close alarm ends it, and the actor awards the slot. Coalition: shipper, broker and a carrier bargain in one thread, the warehouse agent arbitrates the detention waiver, and the settlement runs swap(), pay() and resolveClaim() on the actor.">
+<defs>
+<marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-arr" d="M1 1L9 5L1 9z"/></marker>
+<marker id="r4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-relay" d="M1 1L9 5L1 9z"/></marker>
+</defs>
+<text class="hd" x="125" y="24" text-anchor="middle">Swap · peer to peer</text>
+<text class="hd" x="360" y="24" text-anchor="middle">Auction · one to many</text>
+<text class="hd" x="595" y="24" text-anchor="middle">Coalition · many, with an arbiter</text>
+<g class="n b"><rect x="30" y="46" width="85" height="36" rx="5"/><text class="tt" x="72" y="68" text-anchor="middle">Carrier C</text></g>
+<g class="n b"><rect x="135" y="46" width="85" height="36" rx="5"/><text class="tt" x="177" y="68" text-anchor="middle">Carrier B</text></g>
+<line class="e relay" x1="115" y1="64" x2="135" y2="64" marker-end="url(#r4)" marker-start="url(#r4)"/>
+<text class="lbl relay" x="125" y="104" text-anchor="middle">SWAP? · COUNTER $200 · AGREE</text>
+<line class="e" x1="125" y1="116" x2="125" y2="156" marker-end="url(#a4)"/>
+<text class="lbl" x="133" y="140">SETTLE</text>
+<g class="n a"><rect x="60" y="160" width="130" height="40" rx="5"/><text class="tt" x="125" y="176" text-anchor="middle">Dock actor</text><text class="sub" x="125" y="192" text-anchor="middle">swap() · pay()</text></g>
+<text class="lbl" x="125" y="228" text-anchor="middle">atomic: a conflicting</text>
+<text class="lbl" x="125" y="242" text-anchor="middle">SETTLE a second later is REJECTED</text>
+<g class="n b"><rect x="262" y="46" width="196" height="36" rx="5"/><text class="tt" x="360" y="62" text-anchor="middle">#pier9 · AUCTION a3</text><text class="sub" x="360" y="76" text-anchor="middle">door 2 at 09:00, closes 09:10</text></g>
+<g class="n b"><rect x="262" y="110" width="60" height="34" rx="5"/><text class="sub" x="292" y="131" text-anchor="middle">Carrier B</text></g>
+<g class="n b"><rect x="330" y="110" width="60" height="34" rx="5"/><text class="sub" x="360" y="131" text-anchor="middle">Carrier D</text></g>
+<g class="n b"><rect x="398" y="110" width="60" height="34" rx="5"/><text class="sub" x="428" y="131" text-anchor="middle">Carrier A</text></g>
+<line class="e relay" x1="292" y1="110" x2="292" y2="84" marker-end="url(#r4)"/>
+<line class="e relay" x1="360" y1="110" x2="360" y2="84" marker-end="url(#r4)"/>
+<line class="e relay" x1="428" y1="110" x2="428" y2="84" marker-end="url(#r4)"/>
+<text class="lbl relay" x="360" y="162" text-anchor="middle">BID T6 ready 08:50 · BID T8 09:10 · pass</text>
+<g class="n warn"><rect x="275" y="176" width="170" height="30" rx="5"/><text class="sub" x="360" y="195" text-anchor="middle">alarm: auction_close 09:10</text></g>
+<line class="e" x1="360" y1="206" x2="360" y2="226" marker-end="url(#a4)"/>
+<g class="n a"><rect x="295" y="230" width="130" height="40" rx="5"/><text class="tt" x="360" y="246" text-anchor="middle">Dock actor</text><text class="sub" x="360" y="262" text-anchor="middle">award(a3, T6)</text></g>
+<g class="n b"><rect x="500" y="46" width="190" height="36" rx="5"/><text class="tt" x="595" y="62" text-anchor="middle">#pier9 thread · hot load L17</text><text class="sub" x="595" y="76" text-anchor="middle">"who can yield 11:00?"</text></g>
+<g class="n b"><rect x="500" y="110" width="58" height="34" rx="5"/><text class="sub" x="529" y="131" text-anchor="middle">Shipper</text></g>
+<g class="n b"><rect x="566" y="110" width="58" height="34" rx="5"/><text class="sub" x="595" y="131" text-anchor="middle">Broker</text></g>
+<g class="n b"><rect x="632" y="110" width="58" height="34" rx="5"/><text class="sub" x="661" y="131" text-anchor="middle">Carrier B</text></g>
+<line class="e relay" x1="529" y1="110" x2="529" y2="84" marker-end="url(#r4)" marker-start="url(#r4)"/>
+<line class="e relay" x1="595" y1="110" x2="595" y2="84" marker-end="url(#r4)" marker-start="url(#r4)"/>
+<line class="e relay" x1="661" y1="110" x2="661" y2="84" marker-end="url(#r4)" marker-start="url(#r4)"/>
+<text class="lbl relay" x="595" y="162" text-anchor="middle">broker yields if B sells it 12:00 for $80</text>
+<g class="n b"><rect x="500" y="176" width="190" height="30" rx="5"/><text class="sub" x="595" y="195" text-anchor="middle">pier9-ops: waiver on T3 approved</text></g>
+<line class="e" x1="595" y1="206" x2="595" y2="226" marker-end="url(#a4)"/>
+<g class="n a"><rect x="510" y="230" width="170" height="40" rx="5"/><text class="tt" x="595" y="246" text-anchor="middle">Dock actor</text><text class="sub" x="595" y="262" text-anchor="middle">swap() · pay() · resolveClaim()</text></g>
+</svg>
+</div>
+<figcaption>Coral boxes and dashed arrows are agents on Relay talking to each other; the dispatcher is not in these pictures because it only listens. Blue is the actor validating the outcome. The amber alarm is the actor ending an auction nobody is watching.</figcaption>
+</figure>
+<div class="tw"><table>
+<tr><th>Pattern</th><th>Triggered by</th><th>Who talks</th><th>What the actor does</th><th>What the room sees</th></tr>
+<tr><td>Swap</td><td>An offer whose text names who holds the slot the carrier really wants</td><td>Two carriers, up to two rounds, money on the table</td><td><code>swap()</code> atomically; <code>pay()</code> for the side payment</td><td>Two agents strike a deal in the feed while the dispatcher says nothing; the Gantt swaps two blocks at once</td></tr>
+<tr><td>Auction</td><td>A freed slot: breakdown, no-show, overrun recovered</td><td>Dispatcher posts, every carrier may bid once</td><td><code>openAuction()</code>, <code>auction_close</code> timer, <code>award()</code></td><td>Three bids land in ten sim-seconds, then an alarm closes it and the winner's block appears</td></tr>
+<tr><td>Coalition</td><td>A hot load that needs someone to yield</td><td>Shipper, broker, a carrier, and the warehouse as arbiter</td><td><code>swap()</code>, <code>pay()</code>, <code>resolveClaim(waived)</code> in one validated settlement</td><td>Four agents in one thread; a three-way trade; the warehouse signs off; the hot load moves to 11:00</td></tr>
+<tr><td>Vetting</td><td>An unknown carrier requests a slot</td><td>Dispatcher asks the broker; warehouse refuses</td><td>Nothing; the request never reaches the actor</td><td>Agents collaborating on trust, which is Relay's "you choose who gets in" in action</td></tr>
+<tr><td>Deadline</td><td>Any thread that goes quiet</td><td>Nobody, which is the point</td><td><code>thread_deadline</code> timer → <code>thread_expired</code>; the dispatcher accepts the standing offer</td><td>"If the agents don't agree, the clock decides." Shown once, in act 2, on purpose</td></tr>
+</table></div>
+
+<h2>The day, hour by hour</h2>
+<figure>
+<div class="dg">
+<svg viewBox="0 0 720 300" role="img" aria-label="Timeline from 10:00 to 17:00 with three lanes. Person A: setup, contract, actor core, alarms and deploy, lunch, dashboard, integration, README and Freestyle, final run, judging. Person B: setup, contract, Relay spike, dispatcher on mock, personas, lunch, scenario runner and end-to-end, integration, backup video, Devpost, judging. Sync points at 11:20 contract frozen, 12:30 actor deployed, 14:30 first full run, 16:00 submit.">
+<text class="hd" x="50" y="24">11:00</text><text class="hd" x="155" y="24">12:00</text><text class="hd" x="260" y="24">13:00</text><text class="hd" x="365" y="24">14:00</text><text class="hd" x="470" y="24">15:00</text><text class="hd" x="575" y="24">16:00</text><text class="hd" x="680" y="24" text-anchor="end">17:00</text>
+<text class="hd" x="20" y="72">A</text><text class="hd" x="20" y="152">B</text>
+<g class="n both"><rect x="50" y="44" width="35" height="44" rx="4"/></g>
+<g class="n a"><rect x="85" y="44" width="122" height="44" rx="4"/><text class="tt" x="146" y="62" text-anchor="middle">actor core</text><text class="sub" x="146" y="78" text-anchor="middle">state · replan</text></g>
+<g class="n a"><rect x="207" y="44" width="53" height="44" rx="4"/><text class="tt" x="233" y="62" text-anchor="middle">alarms</text><text class="sub" x="233" y="78" text-anchor="middle">deploy</text></g>
+<g class="n lunch"><rect x="260" y="44" width="35" height="44" rx="4"/></g>
+<g class="n a"><rect x="295" y="44" width="122" height="44" rx="4"/><text class="tt" x="356" y="62" text-anchor="middle">dashboard</text><text class="sub" x="356" y="78" text-anchor="middle">Gantt · feed · clock</text></g>
+<g class="n both"><rect x="417" y="44" width="79" height="44" rx="4"/><text class="tt" x="456" y="62" text-anchor="middle">integrate</text><text class="sub" x="456" y="78" text-anchor="middle">3 full runs</text></g>
+<g class="n a"><rect x="496" y="44" width="35" height="44" rx="4"/><text class="sub" x="513" y="70" text-anchor="middle">docs</text></g>
+<g class="n a"><rect x="531" y="44" width="44" height="44" rx="4"/><text class="sub" x="553" y="70" text-anchor="middle">final</text></g>
+<g class="n both"><rect x="575" y="44" width="105" height="44" rx="4"/><text class="tt" x="627" y="62" text-anchor="middle">judging</text><text class="sub" x="627" y="78" text-anchor="middle">A narrates</text></g>
+<g class="n both"><rect x="50" y="124" width="35" height="44" rx="4"/></g>
+<g class="n b"><rect x="85" y="124" width="52" height="44" rx="4"/><text class="tt" x="111" y="142" text-anchor="middle">Relay</text><text class="sub" x="111" y="158" text-anchor="middle">spike</text></g>
+<g class="n b"><rect x="137" y="124" width="70" height="44" rx="4"/><text class="tt" x="172" y="142" text-anchor="middle">dispatcher</text><text class="sub" x="172" y="158" text-anchor="middle">vs mock</text></g>
+<g class="n b"><rect x="207" y="124" width="53" height="44" rx="4"/><text class="tt" x="233" y="142" text-anchor="middle">agents</text><text class="sub" x="233" y="158" text-anchor="middle">personas</text></g>
+<g class="n lunch"><rect x="260" y="124" width="35" height="44" rx="4"/></g>
+<g class="n b"><rect x="295" y="124" width="122" height="44" rx="4"/><text class="tt" x="356" y="142" text-anchor="middle">scenario runner</text><text class="sub" x="356" y="158" text-anchor="middle">end to end</text></g>
+<g class="n both"><rect x="417" y="124" width="79" height="44" rx="4"/><text class="tt" x="456" y="142" text-anchor="middle">integrate</text><text class="sub" x="456" y="158" text-anchor="middle">tune timing</text></g>
+<g class="n b"><rect x="496" y="124" width="35" height="44" rx="4"/><text class="sub" x="513" y="150" text-anchor="middle">video</text></g>
+<g class="n b"><rect x="531" y="124" width="44" height="44" rx="4"/><text class="sub" x="553" y="150" text-anchor="middle">submit</text></g>
+<g class="n both"><rect x="575" y="124" width="105" height="44" rx="4"/><text class="tt" x="627" y="142" text-anchor="middle">judging</text><text class="sub" x="627" y="158" text-anchor="middle">B drives</text></g>
+<line class="sync" x1="85" y1="36" x2="85" y2="200"/><text class="lbl warn" x="85" y="216" text-anchor="middle">11:20 contract</text><text class="lbl warn" x="85" y="230" text-anchor="middle">frozen</text>
+<line class="sync" x1="207" y1="36" x2="207" y2="200"/><text class="lbl warn" x="207" y="216" text-anchor="middle">12:30 actor</text><text class="lbl warn" x="207" y="230" text-anchor="middle">deployed</text>
+<line class="sync" x1="417" y1="36" x2="417" y2="200"/><text class="lbl warn" x="417" y="216" text-anchor="middle">14:30 first</text><text class="lbl warn" x="417" y="230" text-anchor="middle">full run</text>
+<line class="sync" x1="575" y1="36" x2="575" y2="200"/><text class="lbl warn" x="575" y="216" text-anchor="middle">16:00</text><text class="lbl warn" x="575" y="230" text-anchor="middle">submit</text>
+<text class="lbl" x="277" y="260" text-anchor="middle">13:00 lunch, 20 min, at the desk</text>
+<text class="lbl" x="20" y="286">Blue = A alone · coral = B alone · purple = both at one screen · gray = lunch</text>
+</svg>
+</div>
+<figcaption>Four sync points, each a one-sentence handshake: the contract is frozen; the actor URL and key are in B's <code>.env</code>; a full four-minute run worked once; the Devpost form is submitted.</figcaption>
+</figure>
+
+<h2><span class="who a">Person A</span> Actor &amp; board</h2>
+<div class="cols">
+<div class="col a"><h3>11:20 to 12:30 · actor core</h3>
+<ul>
+<li><code>terse init dockside --template counter</code>; rename to <code>Dock extends Actor&lt;{ role: string }, never, Snapshot&gt;</code></li>
+<li><code>@Persisted</code> fields for every collection in <code>Snapshot</code>; reassign arrays, never mutate in place (in-place changes don't save)</li>
+<li><code>emit()</code> helper: build the snapshot, <code>this.broadcast(snapshot)</code>; call it at the end of every method</li>
+<li><code>request()</code> with the collision path; <code>replan()</code> as a pure function in <code>actor/src/replan.ts</code> with its own tiny test file</li>
+<li><code>scripts/drive.ts</code>: seeds, fires two requests for the same slot, closes door 3, prints the offers. This is your test harness; you never need Relay</li>
+</ul></div>
+<div class="col a"><h3>12:30 to 1:00 · alarms, deploy, hand-off</h3>
+<ul>
+<li><code>@Persisted timers: { atMin, kind, truckId, fired }[]</code>; <code>scheduleNext()</code> sets <code>this.alarm.set(realAt(earliest))</code></li>
+<li><code>onAlarm()</code>: drain every timer with <code>atMin &lt;= simNow()</code>, handle, <code>scheduleNext()</code>, <code>emit()</code>. Alarms fire while dormant, so this works even if nobody is connected</li>
+<li>Timer kinds: <code>arrival_check</code> (start + 30 → <code>noshow</code>, release slot, open an auction) · <code>detention</code> (arrived + 120 → event, auto <code>fileClaim</code>) · <code>auction_close</code> (→ <code>auction_closed</code> event, nothing else; the dispatcher awards) · <code>thread_deadline</code> (→ <code>thread_expired</code> event)</li>
+<li>The five new methods: <code>swap</code> (check both movable, door types fit, then exchange; reject with a reason otherwise), <code>overrun</code> (stretch the slot, replan behind it), <code>openAuction / bid / award</code> (a record plus a timer), <code>openThread / settleThread</code> (a record plus a timer), <code>pay</code> (a counter). About 30 minutes; do them after deploy if the deploy is slow, since B is on the mock until 1:20 anyway</li>
+<li><code>terse deploy</code>; <code>terse actor generate</code> in <code>relay/</code>; paste <code>TERSE_ACTOR_URL</code> and key into B's <code>.env</code>. Sync point.</li>
+</ul></div>
+<div class="col a"><h3>1:20 to 2:30 · dashboard</h3>
+<ul>
+<li>Vite + React, one page, dark background (it's a projector). Fetch a websocket grant from a 20-line Express route that calls <code>prepareWebsocket</code>; render straight from <code>Snapshot</code></li>
+<li><b>Gantt</b>: 6 rows, 10 hour-columns, trucks as blocks; CSS transition on <code>left</code> so moves slide; amber when late, red when in detention, green when done</li>
+<li><b>Chatter feed</b>: <code>chatter</code> newest at the bottom, auto-scroll, from → to in monospace, replies indented under their thread, SETTLE and REJECTED lines highlighted. The single most important panel</li>
+<li><b>Clock</b>: big <code>HH:MM</code> from <code>simMin</code>, with the next three timers listed under it (an auction closing and a thread deadline look great here)</li>
+<li><b>Counters</b>: detention avoided ($), side payments ($), phone calls (always 0), moves, backhauls</li>
+<li>If time: <b>replay</b>: keep every snapshot in an array; a slider scrubs through them. This is the stage insurance</li>
+</ul></div>
+<div class="col a"><h3>replan(), kept deliberately dumb</h3>
+<ul>
+<li>Fixed: appointments in <code>arrived</code>, <code>unloading</code>, <code>done</code> never move</li>
+<li>Order the rest by priority desc, then <code>etaMin</code> asc, then current start asc</li>
+<li>For each: earliest hour slot ≥ max(eta, now) on an open door of matching type; prefer its current door if still free, to minimize moves</li>
+<li>Dry trucks may use a reefer door only when no dry door is free; reefer trucks never use a dry door</li>
+<li>If start + 60 &gt; <code>hosLimitMin</code> → status <code>tomorrow</code>, event, no offer</li>
+<li>Diff = every (door, start) that changed → open <code>Offer</code>, event <code>replanned</code>, <code>moves++</code>. Detention avoided += 75 × hours a queued truck moved earlier</li>
+<li><code>counter()</code> = pin one truck to a slot, run the same function with that pin, succeed only if no higher-priority truck moved</li>
+</ul></div>
+</div>
+
+<h2><span class="who b">Person B</span> Relay &amp; cast</h2>
+<div class="cols">
+<div class="col b"><h3>11:20 to 11:50 · the Relay spike, 30-minute timebox</h3>
+<ol>
+<li>One script: <code>new AgentRelay({ workspaceKey })</code>, register <code>dock</code> and <code>carrier-a</code>, <code>dock.sendMessage({ to: '@carrier-a', text })</code>, <code>addListener('message.created')</code> prints it. Two agents talking in one process.</li>
+<li>Same, with the two agents in two processes on two laptops.</li>
+<li>Does the desktop-registered Claude Code session on laptop 1 appear in the roster and receive a DM from <code>dock</code>? Yes → Carrier A is real Claude Code in the demo. No → every agent is SDK, and that is fine.</li>
+</ol>
+<p>If step 1 fails on the cloud workspace, create a fresh SDK workspace with <code>AgentRelay.createWorkspace</code> and move on. Do not spend past 11:50 on this.</p></div>
+<div class="col b"><h3>11:50 to 12:30 · dispatcher against the mock</h3>
+<ul>
+<li><code>relay/dock.ts</code>: <code>DockClient</code> interface = the method table above; <code>MockDock</code> returns canned offers; <code>TerseDock</code> comes at 12:30</li>
+<li><code>relay/dispatcher.ts</code>: for every <code>{ offers }</code> returned, post one OFFER to <code>#pier9</code> (naming the holder of the slot the carrier will want) and <code>openThread()</code>; for every Relay message, mirror it with <code>say()</code>, then act only if the first token is <code>SETTLE</code>, <code>BID</code>, <code>VERIFY</code>, <code>accept</code>, <code>counter</code> or <code>decline</code></li>
+<li><code>SETTLE</code> handler: parse the assignments and payments, call the actor in order (<code>swap</code> → <code>pay</code> → <code>resolveClaim</code>), post <code>REJECTED</code> with the actor's reason on the first failure, <code>settleThread()</code> on success</li>
+<li>Auctions: on <code>noshow</code> or a freed slot, <code>openAuction()</code> and post AUCTION; collect <code>BID</code>s into <code>bid()</code>; on the <code>auction_closed</code> event pick earliest-ready then priority and <code>award()</code>. Vetting: a request from a handle not in the roster → post VERIFY to the broker, act on its answer, never call the actor</li>
+<li>Watch the actor websocket for events with <code>seq</code> greater than the last seen: <code>noshow</code>, <code>detention</code>, <code>auction_closed</code>, <code>thread_expired</code>, <code>empty</code> come from alarms, not from your calls</li>
+</ul></div>
+<div class="col b"><h3>12:30 to 1:00 · eight persona agents</h3>
+<ul>
+<li><code>relay/agents.ts</code>: loop over personas, <code>relay.workspace.register({ name, type: 'agent' })</code>, one listener per agent for <code>#pier9</code> messages that mention it or sit in a thread it's part of</li>
+<li>Every agent gets the same structured output: <code>{ verb: "accept" | "counter" | "decline" | "SWAP?" | "COUNTER" | "AGREE" | "SETTLE" | "BID" | "VERIFY" | "silent", args, text }</code>, 8-second timeout, fallback <code>accept</code> or <code>silent</code>. The prompt carries the persona's value of time, its budget, and the thread so far</li>
+<li>Hard rules in code, not in the prompt: two messages per agent per thread, then forced <code>silent</code>; only the agent that made the last concession posts the <code>SETTLE</code>; budgets are enforced before the LLM is asked (an offer above budget is auto-declined)</li>
+<li>The unknown carrier is the eighth agent: a persona with no load, who requests a slot once at the scripted moment</li>
+</ul></div>
+<div class="col b"><h3>1:20 to 2:30 · scenario runner, end to end</h3>
+<ul>
+<li><code>relay/scenario.ts</code>: seeds Pier 9 with 12 trucks, then waits for keypresses 1 to 10, each injecting one event through the dispatcher. Print what each key will do before you press it, and print "waiting for alarm" with a countdown for the alarm rows</li>
+<li>Swap in <code>TerseDock</code>; run the whole cascade against the deployed actor with A's dashboard open. Fix the grammar, fix the parsing, fix the timing</li>
+<li>Write <code>demo/pitch.md</code> (below) and the Devpost text while runs are happening</li>
+</ul></div>
+</div>
+
+<h3>Personas <span class="who b">prose, can be drafted before 11:00</span></h3>
+<div class="tw"><table>
+<tr><th>Agent</th><th>Handle</th><th>Trucks</th><th>Values an hour at</th><th>Persona rule, one line each</th></tr>
+<tr><td>Carrier A, the pusher</td><td><code>carrier-a</code></td><td>T1, T4</td><td>$120 · pays up to $150 to move earlier</td><td>Always wants the earliest slot; opens a SWAP with whoever holds it; never yields to anyone; bids on every auction.</td></tr>
+<tr><td>Carrier B, cooperative</td><td><code>carrier-b</code></td><td>T2, T6, T9, T12</td><td>$60 · will move later for cash</td><td>Accepts anything within two hours; when offered money to move, counters once for 20% more, then agrees.</td></tr>
+<tr><td>Carrier C, reefer</td><td><code>carrier-c</code></td><td>T5, T10</td><td>$200 · budget $250 per deal</td><td>Refuses any dry door outright; opens a SWAP for the earliest reefer slot and pays for it; mentions the cold chain every time.</td></tr>
+<tr><td>Carrier D, owner-operator</td><td><code>carrier-d</code></td><td>T8 · hours end 15:30</td><td>$90 · no side payments, cash-poor</td><td>Bids on auctions it can reach; if a slot ends after 15:30, declines and asks the warehouse for tomorrow 08:00.</td></tr>
+<tr><td>Broker</td><td><code>broker</code></td><td>T3, T7</td><td>$100 · trades, never pays</td><td>Yields for a hot load only if the warehouse waives T3's detention and someone hands it a later slot; verifies carriers against its tender list (L12 → carrier-b only); offers a backhaul to any empty truck.</td></tr>
+<tr><td>Shipper</td><td><code>shipper</code></td><td>T11, hot load L17</td><td>$300 to get 11:00</td><td>Asks the thread who can yield, accepts the broker's package, posts the SETTLE, thanks everyone by name.</td></tr>
+<tr><td>Warehouse</td><td><code>pier9-ops</code></td><td>owns the doors</td><td>arbiter</td><td>Approves claims and waivers under $200, disputes above; refuses any carrier the broker won't vouch for; books tomorrow slots on request; announces door changes.</td></tr>
+<tr><td>Unknown carrier</td><td><code>carrier-x</code></td><td>claims L12</td><td>fraud</td><td>Requests door 2 at 11:00 for load L12 once, at the scripted moment; argues once when refused, then goes quiet.</td></tr>
+</table></div>
+
+<h2>The scenario · three acts, keys 1 to 10</h2>
+<p>Sim clock at 60x: 1 real second = 1 sim minute, so five real minutes is 08:00 to 13:00 on the board. Seed at 08:00 with 12 trucks booked across 6 doors from 08:00 to 13:00. Rows marked <span class="who warn">alarm</span> need no key: the runner prints "waiting for alarm" and you keep your hands off. Every alarm row has a manual fallback on the same key number in case it hasn't fired by the expected second.</p>
+
+<h3>Act 1 · The dock holds the line <span class="who">08:00 to 08:45 · ~50s</span></h3>
+<div class="tw"><table>
+<tr><th>Key</th><th>Sim</th><th>Injects</th><th>Agents</th><th>What should happen on screen</th></tr>
+<tr><td class="t">1</td><td class="t">08:05</td><td>Two <code>request()</code>s for door 4 at 14:00 in the same tick (Carrier A and Carrier B)</td><td>A ↔ B, swap</td><td>One books, the other gets 15:00. <code>collision</code> in the feed. Then Carrier A opens a thread with Carrier B directly: "SWAP? I pay $120 for 14:00." B counters $150, A agrees, A posts SETTLE, the actor swaps two Gantt blocks at once, side payments $150.</td></tr>
+<tr><td class="t">2</td><td class="t">08:30</td><td><code>arrive(T3)</code>, the broker's truck</td><td>none</td><td>The detention clock for T3 starts quietly. It will fire at 10:30 on its own, in act 3.</td></tr>
+</table></div>
+
+<h3>Act 2 · The cascade <span class="who">09:00 to 10:00 · ~120s</span></h3>
+<div class="tw"><table>
+<tr><th>Key</th><th>Sim</th><th>Injects</th><th>Agents</th><th>What should happen on screen</th></tr>
+<tr><td class="t">3</td><td class="t">09:00</td><td><code>reportEta(T1, +90)</code> and <code>reportEta(T4, +90)</code>: both Carrier A trucks stuck in traffic</td><td>B, D, C → auction</td><td>Two slots free at once. The dispatcher posts AUCTION a3 (door 2, 09:00) and a4 (door 1, 10:00). Carrier B bids T6 ready 08:50, Carrier D bids T8 ready 09:10, Carrier C passes (dry doors). The <code>auction_close</code> alarm fires at 09:10; the actor awards a3 to T6 and a4 to T8. Two blocks appear.</td></tr>
+<tr><td class="t">4</td><td class="t">09:20</td><td><code>setDoor(3, closed)</code></td><td>C ↔ B, two rounds</td><td>Reefer T5 displaced to door 6 at 16:00. The OFFER names the holder of door 5 at 14:00 (Carrier B, T9). Carrier C opens the thread: "SWAP? we cover $150". B: "COUNTER $200". C: "AGREE $200, cold chain." C posts SETTLE; the actor swaps; side payments $350.</td></tr>
+<tr><td class="t">5</td><td class="t">09:40</td><td>Carrier X requests door 2 at 11:00 for load L12</td><td>X, broker, warehouse</td><td>The dispatcher never calls the actor. It posts VERIFY to the broker; broker: "no, L12 is tendered to carrier-b only"; pier9-ops: "refused". X argues once, goes quiet. <code>refused</code> in the feed. Agents policing trust.</td></tr>
+<tr><td class="t">6</td><td class="t">09:50</td><td><code>overrun(T6, +45)</code>: paperwork at the door</td><td>B, A → deadline</td><td>Two trucks behind T6 get offers. Carrier B accepts. Carrier A opens a SWAP with nobody willing; the thread goes quiet; the <code>thread_deadline</code> alarm fires at 10:00 and the dispatcher accepts A's standing offer. "If the agents don't agree, the clock decides."</td></tr>
+</table></div>
+
+<h3>Act 3 · The hot load <span class="who">10:15 to 12:00 · ~100s</span></h3>
+<div class="tw"><table>
+<tr><th>Key</th><th>Sim</th><th>Injects</th><th>Agents</th><th>What should happen on screen</th></tr>
+<tr><td class="t">7</td><td class="t">10:15</td><td><code>prioritize(T11)</code>, the shipper's hot load L17</td><td>shipper, broker, B, warehouse</td><td>Broker's T7 is bumped from 11:00. Shipper: "who can yield 11:00?" Broker: "I yield T7 if pier9-ops waives T3's detention and someone gives me 12:00." Carrier B: "take my 12:00 for $80." pier9-ops: "waiver approved." Shipper posts the SETTLE with all three parts; the actor runs <code>swap</code>, <code>pay</code>, and records the waiver as pending. Four agents, one thread, no human.</td></tr>
+<tr><td class="t"><span class="who warn">alarm</span></td><td class="t">10:30</td><td>Nothing. The detention alarm for T3 fires on its own</td><td>none</td><td><code>detention</code> event, claim filed for $150, the pending waiver applies, claim shows <code>waived</code>. Say nothing; let the room notice the clock did it.</td></tr>
+<tr><td class="t"><span class="who warn">alarm</span></td><td class="t">11:00</td><td>Nothing. Arrival check for T12 fires: no-show</td><td>A, D → auction</td><td><code>noshow</code>, slot released, AUCTION a5 posted, Carrier A and Carrier D bid, alarm closes it, award. The second auction of the day, this time with no key pressed anywhere.</td></tr>
+<tr><td class="t">8</td><td class="t">11:20</td><td>Consequence of act 2: T8's new slot ends after 15:30</td><td>D, warehouse</td><td><code>tomorrow</code> event; owner-operator asks pier9-ops for 08:00 tomorrow; pier9-ops books it. Realism freight people respect.</td></tr>
+<tr><td class="t">9</td><td class="t">11:40</td><td><code>done(T9)</code></td><td>broker ↔ B</td><td><code>empty</code> event; broker offers a backhaul to Carrier B; B accepts; <code>backhauls++</code>.</td></tr>
+<tr><td class="t">10</td><td class="t">12:00</td><td>Nothing; freeze the clock</td><td>none</td><td>Counters on screen: detention avoided, side payments, moves, phone calls 0. End.</td></tr>
+</table></div>
+<p>Counting on stage: eight agents, five negotiations (two swaps, one coalition, one vetting, one deadline), three auctions, four alarms firing on their own, nine exceptions, zero prompts typed. Keys 6, 8 and 9 are the cuts if time runs over.</p>
+
+<h2>Integration · 2:30 to 3:15, both at laptop 1</h2>
+<ul class="check">
+<li>Run 1, no narration, fix whatever breaks. Expect the grammar and the timer offsets to need adjusting</li>
+<li>Run 2, with narration and a stopwatch. Target 5:00 total; drop keys 6, 8 and 9 if it runs past 5:30, and never let a thread run past two rounds</li>
+<li>Run 3, clean, and record it: this is the backup video and the Devpost video</li>
+<li>Decide the Carrier A question: real Claude Code on laptop 1 only if it worked in every run</li>
+<li>Freeze the code. Anything after 3:15 is README, video, Devpost, and the pitch</li>
+</ul>
+
+<h2>Cut list · in order, if behind at 1:20</h2>
+<ol>
+<li>Freestyle deploy and the replay slider: run the dashboard locally on the projector</li>
+<li>Real Claude Code as Carrier A: all agents SDK</li>
+<li>Backhaul (key 9) and owner-operator hours (key 8): chatter plus a counter, and one field</li>
+<li>Overrun and the deadline beat (key 6): drop <code>overrun()</code>; keep <code>thread_deadline</code> in the actor because it's the stall insurance anyway</li>
+<li>Vetting (key 5): one persona and one VERIFY handler; cut if the dispatcher is late</li>
+<li>The coalition's three-way trade (key 7): keep <code>prioritize()</code> and the waiver, drop Carrier B's $80 leg</li>
+<li>Auctions: replace with plain offers to the first queued truck. This is the last cut, because the alarm-closes-the-auction beat is the best Durable Actors moment on the list</li>
+</ol>
+<div class="callout">Never cut: the collision and swap (key 1), the door-down two-round swap (key 4), the detention alarm firing on its own, and the chatter feed. Those four are the judging rubric in visible form: serialized state, agents negotiating, the actor waking itself, and the room seeing all of it.</div>
+
+<h2>Demo and pitch · 5 minutes on stage</h2>
+<p><span class="who b">B</span> drives the runner on laptop 2 and watches the feed. <span class="who a">A</span> narrates from laptop 1 with the dashboard on the projector. Nobody types a prompt. The narration is short on purpose: the feed is the show, and the best moments are the ones where A says nothing.</p>
+<ol class="steps">
+<li><span><b>Open <small>· 20s</small></b><span class="say">"A truck needs a time at a warehouse door. Today that's a phone call, and when something goes wrong it's six phone calls. This is Pier 9 Cold Storage: six doors, twelve trucks, and eight companies whose agents are all on Agent Relay. We won't touch the keyboard except to break things."</span> Key 1.</span></li>
+<li><span><b>Act 1 · the collision and the first deal <small>· 40s</small></b><span class="say">"Two carriers just asked for door 4 at two o'clock in the same instant. The dock is a Durable Actor, one request at a time, so this can't double-book. One got it, one got three o'clock. Now watch: the one who lost is going straight to the winner with cash."</span> Wait for the SETTLE. <span class="say">"$150 changed hands, the actor swapped them atomically, and we weren't asked."</span> Key 2 silently.</span></li>
+<li><span><b>Act 2 · the cascade <small>· 120s</small></b>Key 3. <span class="say">"Traffic. Two slots just opened at once, so the dock put them up for auction."</span> Say nothing until the alarm closes it. <span class="say">"That close was an alarm inside the actor, not a human."</span> Key 4. <span class="say">"Door 3 is out. The reefer truck can't use a dry door; its agent knows exactly who holds the slot it needs."</span> Two rounds, then SETTLE. Key 5. <span class="say">"An unknown carrier wants a door. The warehouse asks the broker. Refused, and the dock never heard about it."</span> Key 6, then let the deadline fire. <span class="say">"Those two couldn't agree, so the clock decided."</span></span></li>
+<li><span><b>Act 3 · the hot load <small>· 80s</small></b>Key 7. <span class="say">"The shipper needs this load today. Four agents, one thread: the broker will yield, but only for a detention waiver and someone's noon slot. Watch the warehouse sign off."</span> As the detention alarm fires at 10:30: <span class="say">"And that alarm fired on its own for the truck everyone forgot. The claim landed and the waiver from the deal applied itself."</span> Let the no-show auction run without comment.</span></li>
+<li><span><b>Close <small>· 40s</small></b>Keys 8 to 10 as time allows. Point at the counters. <span class="say">"Nine exceptions, five negotiations, three auctions, four alarms, zero phone calls. Every scarce thing in freight, a door, a load, a container, is a Durable Actor; every company is an agent on Relay; every clock is an alarm. We built the receiver's dock today. The broker's desk is next."</span></span></li>
+</ol>
+<p>Questions judges will ask, with the answer ready: <b>Why an actor and not Postgres?</b> One request at a time is the double-booking guarantee and the reason two conflicting settlements can't both land; alarms fire while nobody is connected; the websocket is the projector. <b>Why Relay and not a webhook?</b> The carriers don't run our software; their agents already have an address, and the negotiations happen between them, not through us. <b>What stops agents from colluding or stalling?</b> Budgets enforced in code, two messages per thread, and a deadline timer in the actor. <b>Who pays?</b> The warehouse, per door per month; it's the party eating detention claims today.</p>
+
+<h2>Submission checklist · 3:35 to 3:55 <span class="who b">B</span></h2>
+<ul class="check">
+<li>Devpost title "Dockside", tagline "Dock appointments that re-plan themselves, agent to agent"</li>
+<li>Built with: Durable Actors (Terse), Agent Relay SDK, OpenAI gpt-5-mini, Bun, React, Freestyle (if deployed)</li>
+<li>Repo link, README with the architecture diagram from this page and a 10-line run guide</li>
+<li>Video: run 3 from integration, trimmed to under 3 minutes, uploaded unlisted</li>
+<li>Description answers the rubric by name: where the actor serializes, where alarms fire, where agents message each other, which parts use both</li>
+<li>Submit by 3:55, not 4:00</li>
+</ul>
+
+<footer>Dockside execution plan · written 08:55 Sat Oct 31, 2026 for a two-person team · five decisions agreed 09:06 · sixth decision and the three-act scenario added 09:15 · APIs checked against docs.useterse.ai and the agent-relay SDK README this morning; if the Relay SDK surprises you, the spike's 30-minute timebox is the plan, not a suggestion.</footer>
+</main>
+
+</body>
+</html>

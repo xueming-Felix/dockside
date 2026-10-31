@@ -1,0 +1,65 @@
+<svg viewBox="0 0 720 300" role="img" aria-label="Three patterns side by side. Swap: two carrier agents exchange SWAP, COUNTER and AGREE messages directly, then one posts SETTLE and the Dock actor runs swap() atomically. Auction: the dispatcher posts a freed slot to the channel, three carriers bid, an auction_close alarm ends it, and the actor awards the slot. Coalition: shipper, broker and a carrier bargain in one thread, the warehouse agent arbitrates the detention waiver, and the settlement runs swap(), pay() and resolveClaim() on the actor." xmlns="http://www.w3.org/2000/svg" width="720" height="300"><style>svg { font-family: 'Source Sans 3', 'Segoe UI', Helvetica, Arial, sans-serif; background: #FFFFFF }
+.n rect { fill: #FFFFFF; stroke: #B4AB9F; stroke-width: 1; }
+.n text { fill: #1F1B16; font-size: 13px; }
+.n .sub { fill: #6B635A; font-size: 11.5px; }
+.n.a rect { fill: #E3ECF5; stroke: #2F5F8F; }
+.n.a .tt { fill: #2F5F8F; font-weight: 600; }
+.n.b rect { fill: #FDE8DF; stroke: #C2410C; }
+.n.b .tt { fill: #C2410C; font-weight: 600; }
+.n.both rect { fill: #ECEAFB; stroke: #5B4FCF; }
+.n.both .tt { fill: #5B4FCF; font-weight: 600; }
+.n.warn rect { fill: #FBEBD2; stroke: #B7640A; }
+.n.warn .tt { fill: #B7640A; font-weight: 600; }
+.n.plain .tt { font-weight: 600; }
+.n.col-a rect { fill: none; stroke: #2F5F8F; stroke-dasharray: 4 4; }
+.n.col-b rect { fill: none; stroke: #C2410C; stroke-dasharray: 4 4; }
+.n.lunch rect { fill: #EEEAE3; stroke: #E0DBD3; }
+.e { stroke: #B4AB9F; fill: none; stroke-width: 1.3; }
+.e.relay { stroke: #C2410C; stroke-dasharray: 5 4; }
+.life { stroke: #E0DBD3; stroke-width: 1; stroke-dasharray: 3 4; }
+.sync { stroke: #B7640A; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.lbl { fill: #6B635A; font-size: 11.5px; }
+.lbl.relay { fill: #C2410C; }
+.lbl.warn { fill: #B7640A; font-weight: 600; }
+.hd { fill: #6B635A; font-size: 11.5px; font-family: "Archivo", "Helvetica Neue", Arial, sans-serif; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.m-arr { fill: #B4AB9F; }
+.m-relay { fill: #C2410C; }</style>
+<defs>
+<marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-arr" d="M1 1L9 5L1 9z"/></marker>
+<marker id="r4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-relay" d="M1 1L9 5L1 9z"/></marker>
+</defs>
+<text class="hd" x="125" y="24" text-anchor="middle">Swap · peer to peer</text>
+<text class="hd" x="360" y="24" text-anchor="middle">Auction · one to many</text>
+<text class="hd" x="595" y="24" text-anchor="middle">Coalition · many, with an arbiter</text>
+<g class="n b"><rect x="30" y="46" width="85" height="36" rx="5"/><text class="tt" x="72" y="68" text-anchor="middle">Carrier C</text></g>
+<g class="n b"><rect x="135" y="46" width="85" height="36" rx="5"/><text class="tt" x="177" y="68" text-anchor="middle">Carrier B</text></g>
+<line class="e relay" x1="115" y1="64" x2="135" y2="64" marker-end="url(#r4)" marker-start="url(#r4)"/>
+<text class="lbl relay" x="125" y="104" text-anchor="middle">SWAP? · COUNTER $200 · AGREE</text>
+<line class="e" x1="125" y1="116" x2="125" y2="156" marker-end="url(#a4)"/>
+<text class="lbl" x="133" y="140">SETTLE</text>
+<g class="n a"><rect x="60" y="160" width="130" height="40" rx="5"/><text class="tt" x="125" y="176" text-anchor="middle">Dock actor</text><text class="sub" x="125" y="192" text-anchor="middle">swap() · pay()</text></g>
+<text class="lbl" x="125" y="228" text-anchor="middle">atomic: a conflicting</text>
+<text class="lbl" x="125" y="242" text-anchor="middle">SETTLE a second later is REJECTED</text>
+<g class="n b"><rect x="262" y="46" width="196" height="36" rx="5"/><text class="tt" x="360" y="62" text-anchor="middle">#pier9 · AUCTION a3</text><text class="sub" x="360" y="76" text-anchor="middle">door 2 at 09:00, closes 09:10</text></g>
+<g class="n b"><rect x="262" y="110" width="60" height="34" rx="5"/><text class="sub" x="292" y="131" text-anchor="middle">Carrier B</text></g>
+<g class="n b"><rect x="330" y="110" width="60" height="34" rx="5"/><text class="sub" x="360" y="131" text-anchor="middle">Carrier D</text></g>
+<g class="n b"><rect x="398" y="110" width="60" height="34" rx="5"/><text class="sub" x="428" y="131" text-anchor="middle">Carrier A</text></g>
+<line class="e relay" x1="292" y1="110" x2="292" y2="84" marker-end="url(#r4)"/>
+<line class="e relay" x1="360" y1="110" x2="360" y2="84" marker-end="url(#r4)"/>
+<line class="e relay" x1="428" y1="110" x2="428" y2="84" marker-end="url(#r4)"/>
+<text class="lbl relay" x="360" y="162" text-anchor="middle">BID T6 ready 08:50 · BID T8 09:10 · pass</text>
+<g class="n warn"><rect x="275" y="176" width="170" height="30" rx="5"/><text class="sub" x="360" y="195" text-anchor="middle">alarm: auction_close 09:10</text></g>
+<line class="e" x1="360" y1="206" x2="360" y2="226" marker-end="url(#a4)"/>
+<g class="n a"><rect x="295" y="230" width="130" height="40" rx="5"/><text class="tt" x="360" y="246" text-anchor="middle">Dock actor</text><text class="sub" x="360" y="262" text-anchor="middle">award(a3, T6)</text></g>
+<g class="n b"><rect x="500" y="46" width="190" height="36" rx="5"/><text class="tt" x="595" y="62" text-anchor="middle">#pier9 thread · hot load L17</text><text class="sub" x="595" y="76" text-anchor="middle">"who can yield 11:00?"</text></g>
+<g class="n b"><rect x="500" y="110" width="58" height="34" rx="5"/><text class="sub" x="529" y="131" text-anchor="middle">Shipper</text></g>
+<g class="n b"><rect x="566" y="110" width="58" height="34" rx="5"/><text class="sub" x="595" y="131" text-anchor="middle">Broker</text></g>
+<g class="n b"><rect x="632" y="110" width="58" height="34" rx="5"/><text class="sub" x="661" y="131" text-anchor="middle">Carrier B</text></g>
+<line class="e relay" x1="529" y1="110" x2="529" y2="84" marker-end="url(#r4)" marker-start="url(#r4)"/>
+<line class="e relay" x1="595" y1="110" x2="595" y2="84" marker-end="url(#r4)" marker-start="url(#r4)"/>
+<line class="e relay" x1="661" y1="110" x2="661" y2="84" marker-end="url(#r4)" marker-start="url(#r4)"/>
+<text class="lbl relay" x="595" y="162" text-anchor="middle">broker yields if B sells it 12:00 for $80</text>
+<g class="n b"><rect x="500" y="176" width="190" height="30" rx="5"/><text class="sub" x="595" y="195" text-anchor="middle">pier9-ops: waiver on T3 approved</text></g>
+<line class="e" x1="595" y1="206" x2="595" y2="226" marker-end="url(#a4)"/>
+<g class="n a"><rect x="510" y="230" width="170" height="40" rx="5"/><text class="tt" x="595" y="246" text-anchor="middle">Dock actor</text><text class="sub" x="595" y="262" text-anchor="middle">swap() · pay() · resolveClaim()</text></g>
+</svg>
