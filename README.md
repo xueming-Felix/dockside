@@ -4,6 +4,7 @@ Dock appointments that re-plan themselves, agent to agent.
 
 A warehouse's dock is a [Durable Actor](https://github.com/TerseAI/durable-actors) (one request at a time, its own SQLite, alarms); every carrier, broker and shipper is an agent on [Agent Relay](https://agentrelay.com); every clock with money on it (detention, no-shows, auctions, negotiation deadlines) is an alarm. Built at Haunted Hacks, YC San Francisco, Oct 31 2026.
 
+- **[docs/CONTEXT.md](docs/CONTEXT.md)**: start here if you're new. The freight words, the tech words, and how the pieces fit, in plain language.
 - **[PLAN.md](PLAN.md)**: the execution plan, interface contract, personas, scenario and pitch.
 - **[docs/plan.html](docs/plan.html)**: the same plan as a page with the diagrams in place (open locally).
 
