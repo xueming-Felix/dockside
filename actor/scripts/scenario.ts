@@ -22,7 +22,8 @@ import { actors } from "../generated/index.js"
 const ACTOR = process.argv[2] ?? "pier9-test"
 const SPEED = Number(process.argv[3] ?? 300)
 const ALARM_GRACE_MS = 10_000
-const GLOBAL_TIMEOUT_MS = 170_000
+const STAGE = !!process.env.STAGE // stage mode: end frozen at 12:00 for the close instead of resuming
+const GLOBAL_TIMEOUT_MS = Math.max(170_000, Math.round((260 * 60_000) / SPEED) + 60_000) // 08:00–12:20 at this speed, plus a minute
 const NOSHOW = "T12" // the only truck the gate never lets in
 const STUCK = "T3" // never sent away: the 10:30 detention beat needs it at the door
 
@@ -427,6 +428,14 @@ async function main(): Promise<void> {
   const f2 = await rpc("snapshot 2 s later", () => dock.snapshot(), s => `simMin ${s.simMin}`)
   check("key 10: frozen; simMin identical 2 s apart", fz.frozen && f1.frozen && f2.frozen && f1.simMin === f2.simMin, `${f1.simMin} vs ${f2.simMin}`)
   board(f2)
+  if (STAGE) {
+    line("stage mode: leaving the clock frozen at 12:00 for the close")
+    check("whole run: the only no-show is T12", f2.events.filter(e => e.kind === "noshow" && e.truckId !== NOSHOW).length === 0)
+    check("whole run: the only detention is T3's", f2.events.filter(e => e.kind === "detention" && e.truckId !== STUCK).length === 0)
+    check("whole run: every awaited alarm fired by itself, tick() never needed", alarms.length === 6 && alarms.every(a => a.firedBy === "alarm"), alarms.map(a => `${a.name}: ${a.firedBy}`).join("; "))
+    finish(0)
+    return
+  }
   const rs = await rpc("resume", () => dock.resume(), s => `${hhmm(s.simMin)} frozen=${s.frozen}`)
   clock.realStart = rs.realStart; clock.frozenAt = null
   await sleep(1000)
